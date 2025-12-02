@@ -6,7 +6,7 @@ import { useNavigate, Link } from "react-router-dom";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { setIsLoggedin, setUserData } = useContext(Appcontent); 
+  const { setIsLoggedin,userData, setUserData, setLoading, loading } = useContext(Appcontent); 
 
 
   // form states
@@ -17,8 +17,7 @@ const Login = () => {
 
   const { email, password } = formData;
 
-  // loading state
-  const [loading, setLoading] = useState(false);
+
 
   const handleLogin = async (e) => {
     e.preventDefault();

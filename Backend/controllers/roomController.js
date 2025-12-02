@@ -1,14 +1,10 @@
-// Generate The Room ID
-
 import Room from "../models/Room.js";
-
 
 const generateRoomCode = () => {
   return Math.random().toString(36).substring(2, 10).toUpperCase();
 };
 
 // Create Room to Join
-
 export const createRoom = async (req, res) => {
   const { title } = req.body;
   const userID = req.body.userID;
@@ -28,12 +24,14 @@ export const createRoom = async (req, res) => {
       users: [userID],
     });
 
+    
+
     return res.status(200).json({
       success: true,
       message: "Room created successfully",
       room,
       roomLink: `/room/${room._id}`,
-      roomCode
+      roomCode: roomCode
     });
     
   } catch (err) {
@@ -57,7 +55,7 @@ export const joinRoom = async (req, res) => {
 
     let room = null;
 
-    // Case 1: user enters link
+
     if (input.includes("/room/")) {
       try {
         const roomId = input.split("/room/")[1].trim();
@@ -112,9 +110,6 @@ export const joinRoom = async (req, res) => {
 };
 
 
-
-
-//remove A person
 
 export const removeUser = async (req, res) => {
   try {

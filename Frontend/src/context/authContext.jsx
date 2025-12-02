@@ -6,7 +6,7 @@ export const Appcontent = createContext();
 export const AppContextProvider = (props) => {
   const [isLoggedin, setIsLoggedin] = useState(false);
   const [userData, setUserData] = useState(null); 
-  const [loading, setLoading] = useState(true);   // ⭐ NEW FIX
+  const [loading, setLoading] = useState(true);   
 
   axios.defaults.withCredentials = true;
 
@@ -55,8 +55,9 @@ export const AppContextProvider = (props) => {
     isLoggedin,
     setIsLoggedin,
     userData,
-    loading,        // ⭐ pass loading
+    loading,     
     setUserData,
+    setLoading
   };
 
   return (
