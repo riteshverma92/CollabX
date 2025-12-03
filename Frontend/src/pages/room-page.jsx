@@ -1,86 +1,75 @@
+// src/pages/RoomPage.jsx
 import React, { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
+import WhiteBoard from "../WhiteBoard";
+import { objectManager } from "../WhiteBoard/engine/objectManager";
 
-function RoomPage() {
+export default function RoomPage() {
   const { roomId } = useParams();
-  const [msg, setMsg] = useState("");
-  const [messages, setMessages] = useState([]);
   const wsRef = useRef(null);
+  const [messages, setMessages] = useState([]);
+  const [msg, setMsg] = useState("");
 
- 
   useEffect(() => {
     const ws = new WebSocket(`ws://localhost:8080?roomId=${roomId}`);
     wsRef.current = ws;
 
-    ws.onopen = () => console.log("WebSocket Connected");
+    ws.onmessage = (ev) => {
+      const data = JSON.parse(ev.data);
 
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        setMessages((prev) => [...prev, data]);
-      } catch {
-        console.warn("Invalid WS message:", event.data);
+      if (data.type === "init") {
+        objectManager.setObjects(data.objects || []);
+        return;
+      }
+
+      if (data.type === "object:add") {
+        // add shapes from other users
+        objectManager.addObject(data.object);
+        return;
+      }
+
+      if (data.type === "chat") {
+        setMessages((p) => [...p, data]);
       }
     };
 
-    ws.onerror = (err) => console.error("WS Error:", err);
-    ws.onclose = () => console.log("WS Closed");
+    ws.onerror = (e) => console.error("WS error", e);
+    ws.onopen = () => console.log("WS open");
+    ws.onclose = () => console.log("WS closed");
 
-    return () => ws.close();
+    return () => {
+      try { ws.close(); } catch {}
+    };
   }, [roomId]);
 
-
-  const sendMessage = () => {
+  const sendChat = () => {
     if (!msg.trim()) return;
-    if (!wsRef.current || wsRef.current.readyState !== 1) return;
-
-    wsRef.current.send(JSON.stringify({ text: msg }));
+    const payload = { type: "chat", text: msg };
+    wsRef.current?.send(JSON.stringify(payload));
+    setMessages((p) => [...p, { text: msg, userId: "you" }]);
     setMsg("");
   };
 
-  const handleEnter = (e) => {
-    if (e.key === "Enter") sendMessage();
-  };
-
   return (
-    <div className="bg-black text-white h-screen flex flex-col">
-      {/* Header */}
-      <div className="p-4 text-xl font-bold border-b border-white/10">
-        Room ID: {roomId}
+    <div className="h-screen flex">
+      <div className="flex-1">
+        <WhiteBoard wsRef={wsRef} />
       </div>
 
-      {/* Messages */}
-      <div className="flex-1 p-4 overflow-y-auto space-y-3">
-        {messages.map((m, i) => (
-          <div
-            key={i}
-            className="max-w-xs px-4 py-2 rounded-lg bg-gray-700 text-white mr-auto"
-          >
-            {m.text}
-          </div>
-        ))}
-      </div>
+      <div className="w-80 bg-gray-900 text-white flex flex-col">
+        <div className="p-4 text-lg font-bold border-b border-gray-700">Chat</div>
 
-      {/* Input */}
-      <div className="p-4 border-t border-white/10 flex gap-3">
-        <input
-          type="text"
-          value={msg}
-          onChange={(e) => setMsg(e.target.value)}
-          onKeyDown={handleEnter}
-          placeholder="Type a message..."
-          className="flex-1 bg-white/10 px-4 py-2 rounded-lg outline-none"
-        />
+        <div className="flex-1 overflow-y-auto p-3 space-y-2">
+          {messages.map((m, i) => (
+            <div key={i} className="p-2 bg-gray-700 rounded">{m.text}</div>
+          ))}
+        </div>
 
-        <button
-          onClick={sendMessage}
-          className="bg-purple-600 px-5 py-2 rounded-lg hover:bg-purple-700"
-        >
-          Send
-        </button>
+        <div className="p-3 flex gap-2">
+          <input className="flex-1 p-2 bg-gray-700 rounded" value={msg} onChange={(e) => setMsg(e.target.value)} />
+          <button onClick={sendChat} className="px-4 bg-purple-600 rounded">Send</button>
+        </div>
       </div>
     </div>
   );
 }
-
-export default RoomPage;
