@@ -4,7 +4,19 @@ const userSchema = new mongoose.Schema({
   userName:{ type: String, required: true },
   email:{ type: String, required: true, unique: true },
   password:{ type: String, required: true },
-  rooms :{type: mongoose.Schema.Types.ObjectId}
+  ownrooms :[
+    {
+      type : mongoose.Schema.Types.ObjectId,
+      ref : "Room"
+    }
+  ],
+
+  joinedrooms :[
+    {
+      type : mongoose.Schema.Types.ObjectId,
+      ref : "Room"
+    }
+  ]
   
 });
 
