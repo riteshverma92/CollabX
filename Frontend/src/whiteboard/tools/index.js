@@ -6,6 +6,7 @@ import EraserTool from "./EraserTool.js";
 import TextTool from "./TextTool.js";
 import PanTool from "./PanTool.js";
 
+
 export const Tools = {
   rect: RectTool,
   line: LineTool,
@@ -14,4 +15,5 @@ export const Tools = {
   eraser: EraserTool,
   text: TextTool,
   pan: PanTool,
+  
 };

@@ -22,6 +22,7 @@ export default function Toolbar({ activeTool, setTool, zoomIn, zoomOut, resetVie
       {ToolButton("eraser", "Erase", "bg-red-600")}
       {ToolButton("text", "Text", "bg-yellow-600")}
       {ToolButton("pan", "Pan", "bg-green-600")}
+      
 
       <div className="flex items-center gap-2 ml-2">
         <button

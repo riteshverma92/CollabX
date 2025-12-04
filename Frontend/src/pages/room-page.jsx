@@ -10,11 +10,10 @@ export default function RoomPage() {
   const [messages, setMessages] = useState([]);
   const [msg, setMsg] = useState("");
 
-  // controls showing/hiding chat panel
+  // controls showing/hiding chat
   const [chatOpen, setChatOpen] = useState(true);
 
   useEffect(() => {
-    // NOTE: change ws URL if your server runs on a different host/port or wss for production
     const ws = new WebSocket(`ws://localhost:8080?roomId=${roomId}`);
     wsRef.current = ws;
 
@@ -31,7 +30,6 @@ export default function RoomPage() {
       }
 
       if (data.type === "init") {
-        // full state from server
         objectManager.setObjects(data.objects || []);
         return;
       }
@@ -48,7 +46,6 @@ export default function RoomPage() {
 
       if (data.type === "chat") {
         setMessages((p) => [...p, data]);
-        return;
       }
     };
 
@@ -82,19 +79,23 @@ export default function RoomPage() {
   };
 
   return (
-    <div className="h-screen w-screen flex relative">
-      {/* WHITEBOARD AREA */}
-      <div className={`flex-1 transition-all duration-300`}>
-        <WhiteBoard wsRef={wsRef} />
-      </div>
+   <div className="h-screen w-screen flex flex-row relative overflow-hidden">
+  
+  {/* WHITEBOARD */}
+  <div
+    className="transition-all duration-300 flex-1"
+    style={{ minWidth: 0 }}
+  >
+    <WhiteBoard wsRef={wsRef} />
+  </div>
 
-      {/* CHAT PANEL */}
-      <div
-        className={`bg-gray-900 text-white h-full flex flex-col border-l border-gray-700
-        transition-all duration-300 
-        ${chatOpen ? "w-80" : "w-0 overflow-hidden"}`}
-      >
-        {/* CHAT HEADER */}
+  {/* CHAT PANEL */}
+  <div
+    className={`bg-gray-900 text-white h-full flex flex-col border-l border-gray-700 shrink-0
+      transition-all duration-300
+      ${chatOpen ? "w-80" : "w-0 overflow-hidden"}`}
+  >
+        {/* HEADER */}
         <div className="p-4 text-lg font-bold border-b border-gray-700 flex justify-between items-center">
           Chat
           <button
@@ -105,7 +106,7 @@ export default function RoomPage() {
           </button>
         </div>
 
-        {/* CHAT MESSAGES */}
+        {/* MESSAGES */}
         <div className="flex-1 overflow-y-auto p-3 space-y-2">
           {messages.map((m, i) => (
             <div key={i} className="bg-gray-700 p-2 rounded">
@@ -114,7 +115,7 @@ export default function RoomPage() {
           ))}
         </div>
 
-        {/* CHAT INPUT */}
+        {/* INPUT */}
         <div className="p-3 flex gap-2">
           <input
             className="flex-1 p-2 bg-gray-700 rounded"
@@ -128,11 +129,11 @@ export default function RoomPage() {
         </div>
       </div>
 
-      {/* CHAT FLOATING BUTTON (WHEN CHAT IS HIDDEN) */}
+      {/* OPEN CHAT BUTTON */}
       {!chatOpen && (
         <button
           onClick={() => setChatOpen(true)}
-          className="absolute right-4 top-4 bg-purple-600 text-white px-4 py-2 rounded shadow-lg hover:bg-purple-700 transition"
+          className="absolute right-4 top-4 z-50 bg-purple-600 text-white px-4 py-2 rounded shadow-lg hover:bg-purple-700 transition"
         >
           Open Chat
         </button>

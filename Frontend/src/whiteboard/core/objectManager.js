@@ -43,54 +43,105 @@ class ObjectManager {
   }
 
   // Hit-test for eraser
+  // findAt(x, y) {
+  //   for (let i = this.objects.length - 1; i >= 0; i--) {
+  //     const o = this.objects[i];
+  //     if (!o) continue;
+
+  //     // Rectangle
+  //     if (o.type === "rect") {
+  //       const left = Math.min(o.x, o.x + o.w);
+  //       const right = Math.max(o.x, o.x + o.w);
+  //       const top = Math.min(o.y, o.y + o.h);
+  //       const bottom = Math.max(o.y, o.y + o.h);
+  //       if (x >= left && x <= right && y >= top && y <= bottom) return o;
+  //     }
+
+  //     // Circle
+  //     if (o.type === "circle") {
+  //       const dx = x - o.x;
+  //       const dy = y - o.y;
+  //       if (Math.sqrt(dx * dx + dy * dy) <= o.r) return o;
+  //     }
+
+  //     // Line
+  //     if (o.type === "line") {
+  //       const dist = pointToSegmentDistance(x, y, o.x1, o.y1, o.x2, o.y2);
+  //       if (dist <= (o.strokeWidth || 4)) return o;
+  //     }
+
+  //     // Pen path
+  //     if (o.type === "pen") {
+  //       for (const p of o.points) {
+  //         if (Math.hypot(x - p.x, y - p.y) <= (o.strokeWidth || 4)) {
+  //           return o;
+  //         }
+  //       }
+  //     }
+
+  //     // Text
+  //     if (o.type === "text") {
+  //       const fontSize = parseInt(o.font || "18px", 10);
+  //       const width = fontSize * 0.6 * (o.text.length || 0);
+  //       const height = fontSize;
+
+  //       if (x >= o.x && x <= o.x + width && y >= o.y - height && y <= o.y)
+  //         return o;
+  //     }
+  //   }
+  //   return null;
+  // }
+
+
   findAt(x, y) {
-    for (let i = this.objects.length - 1; i >= 0; i--) {
-      const o = this.objects[i];
-      if (!o) continue;
+  for (let i = this.objects.length - 1; i >= 0; i--) {
+    const o = this.objects[i];
 
-      // Rectangle
-      if (o.type === "rect") {
-        const left = Math.min(o.x, o.x + o.w);
-        const right = Math.max(o.x, o.x + o.w);
-        const top = Math.min(o.y, o.y + o.h);
-        const bottom = Math.max(o.y, o.y + o.h);
-        if (x >= left && x <= right && y >= top && y <= bottom) return o;
-      }
+    const HIT_RADIUS = 12;  // <-- big improvement
 
-      // Circle
-      if (o.type === "circle") {
-        const dx = x - o.x;
-        const dy = y - o.y;
-        if (Math.sqrt(dx * dx + dy * dy) <= o.r) return o;
-      }
+    if (o.type === "rect") {
+      const left = Math.min(o.x, o.x + o.w);
+      const right = Math.max(o.x, o.x + o.w);
+      const top = Math.min(o.y, o.y + o.h);
+      const bottom = Math.max(o.y, o.y + o.h);
+      if (x >= left && x <= right && y >= top && y <= bottom) return o;
+    }
 
-      // Line
-      if (o.type === "line") {
-        const dist = pointToSegmentDistance(x, y, o.x1, o.y1, o.x2, o.y2);
-        if (dist <= (o.strokeWidth || 4)) return o;
-      }
+    if (o.type === "circle") {
+      const dx = x - o.x;
+      const dy = y - o.y;
+      if (Math.sqrt(dx * dx + dy * dy) <= (o.r + HIT_RADIUS)) return o;
+    }
 
-      // Pen path
-      if (o.type === "pen") {
-        for (const p of o.points) {
-          if (Math.hypot(x - p.x, y - p.y) <= (o.strokeWidth || 4)) {
-            return o;
-          }
+    if (o.type === "line") {
+      const d = pointToSegmentDistance(x, y, o.x1, o.y1, o.x2, o.y2);
+      if (d <= (o.strokeWidth || 4) + HIT_RADIUS) return o;
+    }
+
+    if (o.type === "pen") {
+      const pts = o.points || [];
+      for (let j = 0; j < pts.length - 1; j++) {
+        const p1 = pts[j];
+        const p2 = pts[j + 1];
+        const d = pointToSegmentDistance(x, y, p1.x, p1.y, p2.x, p2.y);
+
+        if (d <= (o.strokeWidth || 4) + HIT_RADIUS) {
+          return o;
         }
       }
-
-      // Text
-      if (o.type === "text") {
-        const fontSize = parseInt(o.font || "18px", 10);
-        const width = fontSize * 0.6 * (o.text.length || 0);
-        const height = fontSize;
-
-        if (x >= o.x && x <= o.x + width && y >= o.y - height && y <= o.y)
-          return o;
-      }
     }
-    return null;
+
+    if (o.type === "text") {
+      const fontSize = parseInt(o.font || "18px", 10);
+      const w = (o.text?.length || 0) * fontSize * 0.6;
+      const h = fontSize;
+      if (x >= o.x && x <= o.x + w && y >= o.y - h && y <= o.y) return o;
+    }
   }
+
+  return null;
+}
+
 }
 
 // Helper for line hit-test

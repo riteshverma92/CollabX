@@ -22,32 +22,34 @@ function Whiteboard({ ws }) {
   // Initialize canvas size & context
   useEffect(() => {
     const resize = () => {
-      const canvas = canvasRef.current;
-      const container = containerRef.current;
-      if (!canvas || !container) return;
+  const parent = canvas.parentElement;
+  const rect = parent.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
 
-      // Resize canvas to container size (pixel ratio aware)
-      const rect = container.getBoundingClientRect();
-      const dpr = window.devicePixelRatio || 1;
-      canvas.width = Math.floor(rect.width * dpr);
-      canvas.height = Math.floor(rect.height * dpr);
-      canvas.style.width = `${rect.width}px`;
-      canvas.style.height = `${rect.height}px`;
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
 
-      const ctx = canvas.getContext("2d");
-      ctx.scale(dpr, dpr); // scale for high DPI
-      ctx.lineWidth = 2;
-      ctx.lineCap = "round";
-      ctx.strokeStyle = "black";
-      ctxRef.current = ctx;
+  canvas.style.width = rect.width + "px";
+  canvas.style.height = rect.height + "px";
 
-      // Expose globally for remote drawing
-      window.whiteboardCtx = ctx;
-    };
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.scale(dpr, dpr);
+};
 
-    resize();
-    window.addEventListener("resize", resize);
-    return () => window.removeEventListener("resize", resize);
+resize();
+
+// 🔥 IMPORTANT: this triggers when chat open/close changes parent width
+const observer = new ResizeObserver(() => resize());
+observer.observe(canvas.parentElement);
+
+window.addEventListener("resize", resize);
+
+return () => {
+  observer.disconnect();
+  window.removeEventListener("resize", resize);
+};
+
+
   }, []);
 
   // Emit helper
