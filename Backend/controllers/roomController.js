@@ -105,7 +105,11 @@ export const joinRoom = async (req, res) => {
     // Add room to joinedrooms
     const userfromdatabase = await User.findById(userID);
 
-    if (!userfromdatabase.joinedrooms.some(id => id.toString() === room._id.toString())) {
+    const myroom = userfromdatabase.ownrooms;
+
+    console.log(myroom);
+
+    if (!myroom.includes(room._id)&& !userfromdatabase.joinedrooms.some(id => id.toString() === room._id.toString())) {
       userfromdatabase.joinedrooms.push(room._id);
       await userfromdatabase.save();
     }
@@ -127,63 +131,75 @@ export const joinRoom = async (req, res) => {
 
 
 
+// delete the room
+
+export const deleteroom = async (req, res) => {
+  const { userID, roomId } = req.body;
+
+  if (!userID) {
+    return res.status(400).json({
+      success: false,
+      message: "You are Logged Out",
+    });
+  }
+
+  if (!roomId) {
+    return res.status(400).json({
+      success: false,
+      message: "Room ID is missing",
+    });
+  }
+
+  try {
+    const room = await Room.findById(roomId);
+
+    if (!room) {
+      return res.status(404).json({
+        success: false,
+        message: "Room Not Found",
+      });
+    }
+
+    // 2️⃣ Check if logged-in user is the owner
+    if (room.owner.toString() !== userID.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: "Only the owner can delete this room",
+      });
+    }
+
+    // 3️⃣ Remove room from owner ownrooms list
+    await User.updateOne(
+      { _id: userID },
+      { $pull: { ownrooms: roomId } }
+    );
+
+    // 4️⃣ Remove room from all users who joined
+    await User.updateMany(
+      { joinedrooms: roomId },
+      { $pull: { joinedrooms: roomId } }
+    );
+
+    // 5️⃣ Finally delete the room
+    await Room.findByIdAndDelete(roomId);
+
+    return res.status(200).json({
+      success: true,
+      message: "Room Deleted Successfully",
+    });
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
 
 
 
 
+// remove the user from the Room 
 
 
-
-
-
-
-
-
-
-
-
-// export const removeUser = async (req, res) => {
-//   try {
-//     const { roomId, targetUserId, userID } = req.body;
-//     const room = await Room.findById({_id: roomId});
-
-//     if (!room) {
-//       return res.status(404).json({
-//         success: false,
-//         message: "Room not found",
-//       });
-//     }
-
-//     if (room.owner.toString() !== userID.toString()) {
-//       return res.status(403).json({
-//         success: false,
-//         message: "Only the owner can remove users",
-//       });
-//     }
-
-//     if (targetUserId.toString() === room.owner.toString()) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Owner cannot be removed from the room",
-//       });
-//     }
-
-//     room.users = room.users.filter(
-//       (id) => id.toString() !== targetUserId
-//     );
-
-//     await room.save();
-
-//     return res.status(200).json({
-//       success: true,
-//       message: "User removed successfully",
-//     });
-
-//   } catch (err) {
-//     console.log("REMOVE USER ERROR:", err);
-//     return res.status(500).json({
-//       success: false,
-//       message: "Server Error",
-//     });
-//   }
-// };

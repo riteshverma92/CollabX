@@ -14,6 +14,3 @@ export const roomSchema = new mongoose.Schema({
 });
 
 export default mongoose.model("Room", roomSchema);
-
-
-

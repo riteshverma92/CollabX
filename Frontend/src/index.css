@@ -1,1 +1,190 @@
+/* Tailwind v4 */
 @import "tailwindcss";
+
+/* -----------------------------
+   🎨 DESIGN TOKENS (FIXED)
+----------------------------- */
+
+:root {
+  /* Core Background System */
+  --background: 220 15% 10%;
+  --foreground: 210 40% 98%;
+
+  /* Card */
+  --card: 220 15% 14%;
+  --card-foreground: 210 40% 98%;
+
+  /* Muted Surfaces */
+  --surface: 220 14% 18%;
+  --surface-hover: 220 14% 22%;
+
+  /* Brand */
+  --primary: 262 80% 60%;
+  --primary-foreground: 210 40% 98%;
+
+  --accent: 170 75% 45%;
+  --accent-foreground: 210 40% 98%;
+
+  /* Muted */
+  --muted: 220 10% 28%;
+  --muted-foreground: 220 10% 70%;
+
+  /* Errors */
+  --destructive: 0 72% 55%;
+  --destructive-foreground: 210 40% 98%;
+
+  /* Border */
+  --border: 220 12% 20%;
+
+  --radius: 0.75rem;
+
+  /* Shadows */
+  --shadow-card: 0 6px 20px rgba(0,0,0,0.45);
+  --shadow-card-hover: 0 14px 32px rgba(0,0,0,0.55);
+
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, hsl(262 80% 60%), hsl(290 70% 58%));
+}
+
+/* Dark mode hook */
+.dark {
+  --background: 220 15% 10%;
+  --foreground: 210 40% 98%;
+}
+
+/* -----------------------------
+   🌑 GLOBAL BASE STYLES
+----------------------------- */
+
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  height: 100%;
+  font-family: Inter, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* -----------------------------
+   🧊 GLASS CARD COMPONENT
+----------------------------- */
+
+.glass-card {
+  background: hsl(var(--surface));
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  transition: all 0.25s ease;
+}
+
+.glass-card-hover:hover {
+  background: hsl(var(--surface-hover));
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-card-hover);
+}
+
+/* -----------------------------
+   🏷️ ROOM CODE / BADGES
+----------------------------- */
+
+.room-code {
+  display: inline-block;
+  padding: 4px 8px;
+  font-size: 12px;
+  border-radius: 6px;
+  background: hsl(var(--muted));
+  color: hsl(var(--muted-foreground));
+}
+
+/* -----------------------------
+   🔘 ACTION BUTTONS
+----------------------------- */
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border-radius: 8px;
+  transition: 0.2s;
+}
+
+.action-btn:hover {
+  background: hsl(var(--surface-hover));
+}
+
+.action-btn-share:hover {
+  background: hsla(170, 75%, 45%, 0.15);
+  color: hsl(var(--accent));
+}
+
+.action-btn-danger:hover {
+  background: hsla(0, 72%, 55%, 0.18);
+  color: hsl(var(--destructive));
+}
+
+/* -----------------------------
+   🎚️ SECTION TITLES
+----------------------------- */
+
+.section-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* -----------------------------
+   🧘 EMPTY STATE BLOCKS
+----------------------------- */
+
+.empty-state {
+  background: hsl(var(--surface));
+  padding: 2rem;
+  border-radius: var(--radius);
+  border: 1px solid hsl(var(--border));
+  text-align: center;
+  color: hsl(var(--muted-foreground));
+}
+
+/* -----------------------------
+   ✨ ANIMATIONS
+----------------------------- */
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+@keyframes float {
+  0%,100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* Pulse indicator */
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.4); opacity: 0.45; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: hsl(var(--accent));
+  animation: pulse 1.7s infinite;
+}
+
+/* Fix navbar spacing */
+.pt-for-navbar {
+  padding-top: 80px;
+}

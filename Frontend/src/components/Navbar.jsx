@@ -9,39 +9,27 @@ export default function Navbar() {
   const { userData, loading } = useContext(Appcontent);
   const navigate = useNavigate();
 
-  // ---------------------------
-  // Component States
-  // ---------------------------
   const [title, setTitle] = useState("");
-  const [input, setRoomEntry] = useState("");
-  const [createdRoomId, setCreatedRoomId] = useState("");
-
+  const [roomInput, setRoomInput] = useState("");
   const [openCreateModal, setOpenCreateModal] = useState(false);
   const [openJoinModal, setOpenJoinModal] = useState(false);
-  const [openProfileDropdown, setOpenProfileDropdown] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
 
-  // Reference for detecting outside clicks on the profile dropdown
   const profileRef = useRef();
 
-  // ---------------------------
-  // Close profile dropdown when clicking outside
-  // ---------------------------
   useEffect(() => {
-    const handleClickOutside = (e) => {
+    const handler = (e) => {
       if (profileRef.current && !profileRef.current.contains(e.target)) {
-        setOpenProfileDropdown(false);
+        setProfileOpen(false);
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  // Show loading screen if user data is still loading
   if (loading) return <Loading />;
 
-  // ---------------------------
-  // Create Room Handler
-  // ---------------------------
+  // Create Room
   const createRoom = async () => {
     try {
       const res = await axios.post(
@@ -51,15 +39,12 @@ export default function Navbar() {
       );
 
       if (res.data.success) {
-        const roomID = res.data.roomCode;
-        setCreatedRoomId(roomID);
+        const id =
+          res.data.roomCode || res.data.roomId || res.data._id;
 
-        // Automatically copy room ID to clipboard
-        navigator.clipboard.writeText(roomID);
-
-        toast.success("Room Created & Room ID copied to clipboard");
-
-        // Close modal
+        await navigator.clipboard.writeText(id);
+        toast.success("Room Created & Copied!");
+        window.dispatchEvent(new Event("rooms-updated"));
         setOpenCreateModal(false);
       }
     } catch {
@@ -67,33 +52,33 @@ export default function Navbar() {
     }
   };
 
-  // ---------------------------
-  // Join Room Handler
-  // ---------------------------
+  // Join Room
   const joinRoom = async () => {
     try {
       const res = await axios.post(
         "http://localhost:5000/api/room/join-room",
-        { input },
+        { input: roomInput },
         { withCredentials: true }
       );
 
       if (res.data.success) {
         toast.success("Joined Room");
         setOpenJoinModal(false);
+        window.dispatchEvent(new Event("rooms-updated"));
 
-        // Navigate to room
-        if (res.data.roomLink) navigate(res.data.roomLink);
-        else navigate(`/room/${res.data.roomId}`);
+        navigate(
+          res.data.roomLink ||
+          `/room/${res.data.roomId ||
+            res.data.room?._id ||
+            res.data._id}`
+        );
       }
     } catch {
-      toast.error("Failed to join room");
+      toast.error("Join failed");
     }
   };
 
-  // ---------------------------
-  // User Logout Handler
-  // ---------------------------
+  // Logout
   const logout = async () => {
     try {
       await axios.post(
@@ -101,91 +86,119 @@ export default function Navbar() {
         {},
         { withCredentials: true }
       );
-      toast.success("Logged Out");
       navigate("/login");
+      toast.success("Logged out");
     } catch {
-      toast.error("Logout Failed");
+      toast.error("Logout failed");
     }
   };
 
   return (
-    <div className=" bg-[#F5F6F8]">
+    <>
+      {/* NAVBAR */}
+      <div className="fixed top-0 left-0 w-full z-50 
+        backdrop-blur-xl bg-[hsl(var(--background)/0.75)] 
+        border-b border-[hsl(var(--border))]"
+      >
+        <nav className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
 
-      {/* ---------------------------------------------------------------- */}
-      {/* TOP NAVIGATION BAR */}
-      {/* ---------------------------------------------------------------- */}
-      <nav className="bg-white border-b border-gray-200 px-8 py-3 flex justify-between items-center shadow-sm">
+          {/* LEFT — BRAND NAME */}
+          <h1 className="text-2xl font-black bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+            CollabX
+          </h1>
 
-        {/* Left Action Buttons */}
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setOpenCreateModal(true)}
-            className="px-4 py-2 bg-gray-900 text-white text-sm rounded-md hover:bg-black transition"
-          >
-            + Create Room
-          </button>
+          {/* RIGHT — BUTTONS */}
+          <div className="flex items-center gap-4">
 
-          <button
-            onClick={() => setOpenJoinModal(true)}
-            className="px-4 py-2 bg-gray-700 text-white text-sm rounded-md hover:bg-gray-800 transition"
-          >
-            Join Room
-          </button>
-        </div>
+            {/* CREATE BUTTON */}
+            <button
+              onClick={() => setOpenCreateModal(true)}
+              className="px-4 py-2 rounded-lg bg-[hsl(var(--primary))] 
+              text-[hsl(var(--primary-foreground))] hover:brightness-110 transition cursor-pointer"
+            >
+              + Create Room
+            </button>
 
-        {/* User Profile Dropdown */}
-        <div className="relative" ref={profileRef}>
-          <div
-            onClick={() => setOpenProfileDropdown(!openProfileDropdown)}
-            className="w-11 h-11 rounded-full bg-gray-200 border border-gray-300 flex items-center justify-center cursor-pointer hover:bg-gray-300 transition"
-          >
-            {userData?.userName?.[0]?.toUpperCase()}
-          </div>
+            {/* JOIN BUTTON */}
+            <button
+              onClick={() => setOpenJoinModal(true)}
+              className="px-4 py-2 rounded-lg bg-[hsl(var(--card))] 
+              border border-[hsl(var(--border))] text-white/80 
+              hover:bg-green-800 transition cursor-pointer"
+            >
+              Join Room
+            </button>
 
-          {openProfileDropdown && (
-            <div className="absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg p-4 animate-fadeIn">
-
-              <p className="text-lg font-semibold text-gray-800">{userData.userName}</p>
-              <p className="text-gray-500 mb-4 text-sm">{userData.email}</p>
-
-              <button
-                onClick={logout}
-                className="w-full bg-gray-900 text-white py-2.5 rounded-md hover:bg-black transition"
+            {/* PROFILE AVATAR */}
+            <div className="relative" ref={profileRef}>
+              <div
+                onClick={() => setProfileOpen(!profileOpen)}
+                className="w-11 h-11 rounded-full bg-[hsl(var(--card))] 
+                border border-[hsl(var(--border))] text-white flex 
+                items-center justify-center cursor-pointer hover:bg-white/[0.08] transition"
               >
-                Logout
-              </button>
+                {userData?.userName?.[0]?.toUpperCase()}
+              </div>
+
+              {/* PROFILE DROPDOWN */}
+              {profileOpen && (
+                <div className="absolute right-0 mt-3 w-64 p-4 rounded-xl 
+                  bg-[hsl(var(--card))] border border-[hsl(var(--border))] 
+                  shadow-xl animate-fade-in"
+                >
+                  <p className="text-lg font-semibold text-white">{userData.userName}</p>
+                  <p className="text-sm text-white/40 mb-4">{userData.email}</p>
+
+                  <button
+                    onClick={logout}
+                    className="w-full py-2 rounded-lg 
+    bg-[hsl(var(--accent))] 
+    text-[hsl(var(--accent-foreground))] 
+    hover:brightness-110 transition"
+>
+                  
+                    Logout
+                  </button>
+                </div>
+              )}
             </div>
-          )}
-        </div>
-      </nav>
 
-      {/* ================================================================ */}
-      {/* CREATE ROOM MODAL */}
-      {/* ================================================================ */}
+          </div>
+        </nav>
+      </div>
+
+      {/* ---- CREATE MODAL ---- */}
       {openCreateModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50 p-4">
-          <div className="bg-white w-80 p-6 rounded-lg shadow-xl border border-gray-200">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center 
+          bg-black/50 backdrop-blur-sm">
 
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Create Room</h2>
+          <div className="w-80 p-6 rounded-xl bg-[hsl(var(--card))] 
+            border border-[hsl(var(--border))] shadow-xl animate-fade-in"
+          >
+            <h2 className="text-xl font-semibold text-white mb-4">Create Room</h2>
 
             <input
               type="text"
-              placeholder="Enter room title"
+              placeholder="Room Title"
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-gray-800 focus:ring-2 focus:ring-gray-900 outline-none mb-4"
+              className="w-full px-3 py-2 rounded-lg bg-[hsl(var(--background))] 
+              border border-[hsl(var(--border))] text-white outline-none 
+              focus:border-[hsl(var(--primary))] transition mb-4"
             />
 
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-end gap-3">
               <button
                 onClick={() => setOpenCreateModal(false)}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-100"
+                className="px-4 py-2 rounded-lg border border-[hsl(var(--border))] 
+                text-white/60 hover:bg-white/[0.06]"
               >
                 Cancel
               </button>
 
               <button
                 onClick={createRoom}
-                className="px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-black"
+                className="px-4 py-2 rounded-lg bg-[hsl(var(--primary))] 
+                text-white hover:brightness-110"
               >
                 Create
               </button>
@@ -194,41 +207,46 @@ export default function Navbar() {
         </div>
       )}
 
-      {/* ================================================================ */}
-      {/* JOIN ROOM MODAL */}
-      {/* ================================================================ */}
+      {/* ---- JOIN MODAL ---- */}
       {openJoinModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50 p-4">
-          <div className="bg-white w-80 p-6 rounded-lg shadow-xl border border-gray-200">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center 
+          bg-black/50 backdrop-blur-sm">
 
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Join Room</h2>
+          <div className="w-80 p-6 rounded-xl bg-[hsl(var(--card))] 
+            border border-[hsl(var(--border))] shadow-xl animate-fade-in"
+          >
+            <h2 className="text-xl font-semibold text-white mb-4">Join Room</h2>
 
             <input
               type="text"
               placeholder="Room ID or Link"
-              onChange={(e) => setRoomEntry(e.target.value)}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-gray-800 focus:ring-2 focus:ring-gray-900 outline-none mb-4"
+              onChange={(e) => setRoomInput(e.target.value)}
+              className="w-full px-3 py-2 rounded-lg bg-[hsl(var(--background))] 
+              border border-[hsl(var(--border))] text-white outline-none 
+              focus:border-[hsl(var(--primary))] transition mb-4"
             />
 
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-end gap-3">
               <button
                 onClick={() => setOpenJoinModal(false)}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-100"
+                className="px-4 py-2 rounded-lg border border-[hsl(var(--border))] 
+                text-white/60 hover:bg-white/[0.06]"
               >
                 Cancel
               </button>
 
               <button
                 onClick={joinRoom}
-                className="px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-black"
+                className="px-4 py-2 rounded-lg bg-[hsl(var(--primary))] 
+                text-white hover:brightness-110"
               >
                 Join
               </button>
             </div>
+
           </div>
         </div>
       )}
-
-    </div>
+    </>
   );
 }
