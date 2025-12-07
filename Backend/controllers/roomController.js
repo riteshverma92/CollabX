@@ -35,14 +35,14 @@ export const createRoom = async (req, res) => {
       users: [userID],
     });
 
-    // 2️⃣ Add roomId to user's rooms array
+    //  Add roomId to user's rooms array
     await User.findByIdAndUpdate(
       userID,
       { $push: { ownrooms: room._id } },
       { new: true }
     );
 
-    // 3️⃣ Respond once
+    //  Respond once
     return res.status(200).json({
       success: true,
       message: "Room created successfully",
@@ -107,8 +107,6 @@ export const joinRoom = async (req, res) => {
 
     const myroom = userfromdatabase.ownrooms;
 
-    console.log(myroom);
-
     if (!myroom.includes(room._id)&& !userfromdatabase.joinedrooms.some(id => id.toString() === room._id.toString())) {
       userfromdatabase.joinedrooms.push(room._id);
       await userfromdatabase.save();
@@ -160,7 +158,7 @@ export const deleteroom = async (req, res) => {
       });
     }
 
-    // 2️⃣ Check if logged-in user is the owner
+    // Check if logged-in user is the owner
     if (room.owner.toString() !== userID.toString()) {
       return res.status(403).json({
         success: false,
@@ -168,19 +166,19 @@ export const deleteroom = async (req, res) => {
       });
     }
 
-    // 3️⃣ Remove room from owner ownrooms list
+    // Remove room from owner ownrooms list
     await User.updateOne(
       { _id: userID },
       { $pull: { ownrooms: roomId } }
     );
 
-    // 4️⃣ Remove room from all users who joined
+    // Remove room from all users who joined
     await User.updateMany(
       { joinedrooms: roomId },
       { $pull: { joinedrooms: roomId } }
     );
 
-    // 5️⃣ Finally delete the room
+    // Finally delete the room
     await Room.findByIdAndDelete(roomId);
 
     return res.status(200).json({
@@ -201,5 +199,59 @@ export const deleteroom = async (req, res) => {
 
 
 // remove the user from the Room 
+export const removeUser = async(req, res) =>{
+
+  const{userID, roomId} = req.body;
+  if (!userID) {
+    return res.status(400).json({
+      success: false,
+      message: "You are Logged Out",
+    });
+  }
+
+  if (!roomId) {
+    return res.status(400).json({
+      success: false,
+      message: "Room ID is missing",
+    });
+  }
+
+  try {
+
+
+    const room = await Room.findById(roomId);
+    if(!room){
+      return res.status(400).json({success: false , message: "Room is not found"})
+    }
+    
+    const userfromdatabase = await User.findById(userID);
+    if(!userfromdatabase){
+      return res.status(400).json({success: false , message: "you are not Login"})
+    }
+
+
+    await User.updateOne(
+      { _id: userID },
+      { $pull: { joinedrooms: roomId } }
+    );
+
+
+    await Room.updateOne(
+      { _id: roomId },
+      { $pull: { users: userID } }
+    );
+
+    return res.status(200).json({success: true  , message:" Room Removeed"});
+
+
+  } catch (err) {
+    return res.status(500).json({success: false , message : "Internal server Error"});
+  }
+
+
+
+
+
+}
 
 

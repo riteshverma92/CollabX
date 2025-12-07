@@ -188,3 +188,31 @@ html, body, #root {
 .pt-for-navbar {
   padding-top: 80px;
 }
+
+
+/* Precision pointer cursor (Apple look) */
+.cursor-crosshair {
+  cursor: crosshair;
+}
+
+/* Custom eraser cursor */
+.cursor-eraser {
+  cursor: url("/eraser-cursor.png") 0 20, auto;
+}
+
+
+
+/* Hide scrollbar for Chrome, Safari, Edge */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for Firefox */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+/* Prevent horizontal scroll entirely */
+.no-scrollbar {
+  overflow-x: hidden !important;
+}

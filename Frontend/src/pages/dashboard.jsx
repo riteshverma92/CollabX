@@ -4,7 +4,15 @@ import { Appcontent } from "../context/authContext";
 import axios from "axios";
 import { toast } from "react-toastify";
 
-import { Trash2, Share2, Users, Crown, CircleMinus } from "lucide-react";
+import {
+  Trash2,
+  Share2,
+  Users,
+  Crown,
+  CircleMinus,
+  Loader,
+} from "lucide-react";
+import Loading from "./Loading";
 
 // ------------------------------
 // Avatar Color Logic
@@ -84,6 +92,27 @@ export default function Dashboard() {
     }
   };
 
+
+
+  // Remove Room
+
+  const removeRoom = async(roomId) =>{
+    try {
+      const res = await axios.delete(
+       "http://localhost:5000/api/room/remove-room",
+        { data: { roomId }, withCredentials: true }
+      );
+
+      if (res.data.success) {
+        toast.success("Room Removed");
+        loadAllRooms();
+      }
+    } catch {
+      toast.error("Error deleting room");
+    }
+
+  }
+
   // Copy code
   const copyRoomCode = async (code) => {
     try {
@@ -100,6 +129,10 @@ export default function Dashboard() {
     window.addEventListener("rooms-updated", listener);
     return () => window.removeEventListener("rooms-updated", listener);
   }, []);
+
+  if (loading) {
+    return <Loader></Loader>;
+  }
 
   return (
     <div className="min-h-screen bg-[hsl(var(--background))] text-white">
@@ -200,32 +233,27 @@ export default function Dashboard() {
 
                 {/* REAL AVATARS */}
                 {/* OVERLAPPING CIRCLES */}
-<div className="flex justify-between items-center mt-4">
+                <div className="flex justify-between items-center mt-4">
+                  {/* LEFT — Room Code */}
+                  <p className="text-sm text-white/40">
+                    Room Code:
+                    <span className="ml-2 px-2 py-1 text-xs rounded-md bg-white/[0.06] border border-[hsl(var(--border))]">
+                      {room.roomCode}
+                    </span>
+                  </p>
 
-  {/* LEFT — Room Code */}
-  <p className="text-sm text-white/40">
-    Room Code:
-    <span className="ml-2 px-2 py-1 text-xs rounded-md bg-white/[0.06] border border-[hsl(var(--border))]">
-      {room.roomCode}
-    </span>
-  </p>
+                  {/* RIGHT — Overlapping Circles */}
+                  <div className="flex -space-x-3">
+                    {/* Circle 1 */}
+                    <div className="w-7 h-7 rounded-full bg-gray-600 border-2 border-gray-800"></div>
 
-  {/* RIGHT — Overlapping Circles */}
-  <div className="flex -space-x-3">
-    
-    {/* Circle 1 */}
-    <div className="w-7 h-7 rounded-full bg-gray-600 border-2 border-gray-800"></div>
+                    {/* Circle 2 */}
+                    <div className="w-7 h-7 rounded-full bg-gray-600 border-2 border-gray-800"></div>
 
-    {/* Circle 2 */}
-    <div className="w-7 h-7 rounded-full bg-gray-600 border-2 border-gray-800"></div>
-
-    {/* Circle 3 */}
-    <div className="w-7 h-7 rounded-full bg-gray-600 border-2 border-gray-800"></div>
-
-  </div>
-
-</div>
-
+                    {/* Circle 3 */}
+                    <div className="w-7 h-7 rounded-full bg-gray-600 border-2 border-gray-800"></div>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
@@ -256,7 +284,7 @@ export default function Dashboard() {
                     className="p-1.5 rounded-lg transition group"
                     onClick={(e) => {
                       e.stopPropagation();
-                      deleteRoom(room._id);
+                      removeRoom(room._id);
                     }}
                   >
                     <CircleMinus className="w-4 h-4 text-white/50 group-hover:text-blue-500" />
@@ -266,31 +294,26 @@ export default function Dashboard() {
                 {/* REAL AVATARS */}
 
                 <div className="flex justify-between items-center mt-4">
+                  {/* LEFT — Room Code */}
+                  <p className="text-sm text-white/40">
+                    Room Code:
+                    <span className="ml-2 px-2 py-1 text-xs rounded-md bg-white/[0.06] border border-[hsl(var(--border))]">
+                      {room.roomCode}
+                    </span>
+                  </p>
 
-  {/* LEFT — Room Code */}
-  <p className="text-sm text-white/40">
-    Room Code:
-    <span className="ml-2 px-2 py-1 text-xs rounded-md bg-white/[0.06] border border-[hsl(var(--border))]">
-      {room.roomCode}
-    </span>
-  </p>
+                  {/* RIGHT — Overlapping Circles */}
+                  <div className="flex -space-x-3">
+                    {/* Circle 1 */}
+                    <div className="w-7 h-7 rounded-full bg-gray-600 border-2 border-gray-800"></div>
 
-  {/* RIGHT — Overlapping Circles */}
-  <div className="flex -space-x-3">
-    
-    {/* Circle 1 */}
-    <div className="w-7 h-7 rounded-full bg-gray-600 border-2 border-gray-800"></div>
+                    {/* Circle 2 */}
+                    <div className="w-7 h-7 rounded-full bg-gray-600 border-2 border-gray-800"></div>
 
-    {/* Circle 2 */}
-    <div className="w-7 h-7 rounded-full bg-gray-600 border-2 border-gray-800"></div>
-
-    {/* Circle 3 */}
-    <div className="w-7 h-7 rounded-full bg-gray-600 border-2 border-gray-800"></div>
-
-  </div>
-
-</div>
-
+                    {/* Circle 3 */}
+                    <div className="w-7 h-7 rounded-full bg-gray-600 border-2 border-gray-800"></div>
+                  </div>
+                </div>
               </div>
             ))}
           </div>

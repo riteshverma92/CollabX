@@ -1,49 +1,49 @@
 import React from "react";
+import { ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
 
 export default function Toolbar({ activeTool, setTool, zoomIn, zoomOut, resetView }) {
-  const ToolButton = (name, label, activeColor = "bg-blue-600") => (
+
+  const ToolButton = (name, icon) => (
     <button
       key={name}
       onClick={() => setTool(name)}
-      className={`px-3 py-1 rounded transition 
-        ${activeTool === name ? activeColor : "bg-gray-700 hover:bg-gray-600"}`}
+      className={`p-2 rounded flex items-center justify-center transition
+        bg-white
+        ${activeTool === name ? "ring-2 ring-blue-500" : "hover:bg-gray-100"}
+      `}
     >
-      {label}
+      <img
+        src={icon}
+        alt={name}
+        className={`w-5 h-5 transition-transform
+          ${activeTool === name ? "scale-150" : "hover:scale-180"}
+        `}
+      />
     </button>
   );
 
   return (
-    <div className="absolute top-4 left-4 z-50 px-3 py-2 bg-black/80 backdrop-blur text-white rounded-lg flex gap-2 shadow-lg">
-      
-      {ToolButton("rect", "Rect")}
-      {ToolButton("circle", "Circle")}
-      {ToolButton("line", "Line")}
-      {ToolButton("pen", "Pen")}
-      {ToolButton("eraser", "Erase", "bg-red-600")}
-      {ToolButton("text", "Text", "bg-yellow-600")}
-      {ToolButton("pan", "Pan", "bg-green-600")}
-      
+    <div className="absolute top-4 left-4 z-50 px-3 py-2 bg-white rounded-lg flex gap-2 shadow-lg">
+
+      {ToolButton("rect", "/rectangle.png")}
+      {ToolButton("circle", "/record.png")}
+      {ToolButton("line", "/line.png")}
+      {ToolButton("pen", "/pencil.png")}
+      {ToolButton("eraser", "/eraser.png")}
+      {ToolButton("text", "/text-box.png")}
+      {ToolButton("pan", "/hand.png")}
 
       <div className="flex items-center gap-2 ml-2">
-        <button
-          onClick={zoomOut}
-          className="px-2 py-1 rounded bg-gray-700 hover:bg-gray-600"
-        >
-          -
+        <button className="p-2 rounded bg-black/[0.5] hover:bg-gray-700" onClick={zoomOut}>
+          <ZoomOut size={18} />
         </button>
 
-        <button
-          onClick={zoomIn}
-          className="px-2 py-1 rounded bg-gray-700 hover:bg-gray-600"
-        >
-          +
+        <button className="p-2 rounded bg-black/[0.5] hover:bg-gray-700" onClick={zoomIn}>
+          <ZoomIn size={18} />
         </button>
 
-        <button
-          onClick={resetView}
-          className="px-3 py-1 rounded bg-gray-700 hover:bg-gray-600"
-        >
-          Reset
+        <button className="p-2 rounded bg-black/[0.5] hover:bg-gray-700" onClick={resetView}>
+          <RotateCcw size={18} />
         </button>
       </div>
     </div>
