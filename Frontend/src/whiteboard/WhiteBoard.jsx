@@ -198,7 +198,10 @@ export default function WhiteBoard({ wsRef }) {
       cancelAnimationFrame(rafRef.current);
       unsub();
       observer.disconnect();
-      canvas.parentElement?.removeEventListener("transitionend", onTransitionEnd);
+      canvas.parentElement?.removeEventListener(
+        "transitionend",
+        onTransitionEnd
+      );
       window.removeEventListener("resize", resize);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -302,10 +305,14 @@ export default function WhiteBoard({ wsRef }) {
           className="absolute border p-1 bg-white z-50"
           style={{
             transform: `translate(${offset.current.x + textInput.x * scale}px, 
-                                   ${offset.current.y + textInput.y * scale}px)`,
+                                   ${
+                                     offset.current.y + textInput.y * scale
+                                   }px)`,
           }}
           value={textInput.value}
-          onChange={(e) => setTextInput({ ...textInput, value: e.target.value })}
+          onChange={(e) =>
+            setTextInput({ ...textInput, value: e.target.value })
+          }
           onBlur={commitText}
           onKeyDown={(e) => e.key === "Enter" && commitText()}
         />
@@ -314,13 +321,13 @@ export default function WhiteBoard({ wsRef }) {
       <canvas
         ref={canvasRef}
         style={{
-    width: "100%",
-    height: "100%",
-    background: "#fff",
-    touchAction: "none",
-    zIndex: 0,              // <-- ADD THIS
-    position: "relative",   // <-- ADD THIS
-  }}
+          width: "100%",
+          height: "100%",
+          background: "#fff",
+          touchAction: "none",
+          zIndex: 0, // <-- ADD THIS
+          position: "relative", // <-- ADD THIS
+        }}
         onPointerDown={onDown}
         onPointerMove={onMove}
         onPointerUp={onUp}

@@ -1,122 +1,123 @@
-// server.js
-// Minimal WebSocket server that stores per-room object state in memory,
-// broadcasts finalized object additions and deletions, and returns the full
-// board to newly joined clients.
-//
-// NOTE: in production you should persist rooms[roomId].objects to DB and
-// use Redis pub/sub for multi-server scaling.
-
 import { WebSocketServer } from "ws";
 import jwt from "jsonwebtoken";
 import cookie from "cookie";
+import crypto from "crypto";
 import "dotenv/config";
 
-const rooms = {}; // in-memory: roomId -> { clients: [], objects: [] }
+const rooms = {};  // roomId -> { clients: [], objects: [] }
+const users = {};  // socketUserId -> { name, avatar, color }
 
 const wss = new WebSocketServer({ port: 8080 });
-console.log("WebSocket Server running on ws://localhost:8080");
+console.log("WS running at ws://localhost:8080");
 
 wss.on("connection", (socket, req) => {
-  // parse token from cookies for authentication (keeps your original pattern)
+
+  // optional: token check
   const cookies = cookie.parse(req.headers.cookie || "");
   const token = cookies.token;
+
   if (!token) {
-    socket.close(); // no token -> reject connection
+    socket.close();
     return;
   }
 
-  let user;
   try {
-    // jwt.verify throws if invalid; keep server secure by rejecting invalid tokens
-    user = jwt.verify(token, process.env.JWT_SECRET);
+    jwt.verify(token, process.env.JWT_SECRET);
   } catch {
     socket.close();
     return;
   }
 
-  // read roomId from query string
   const url = new URL(req.url, "http://localhost");
   const roomId = url.searchParams.get("roomId");
+
   if (!roomId) {
-    socket.send(JSON.stringify({ type: "system", text: "Missing roomId" }));
     socket.close();
     return;
   }
 
-  // initialize room container if needed
   if (!rooms[roomId]) rooms[roomId] = { clients: [], objects: [] };
-
-  // attach lightweight user id to socket for server-side metadata
-  socket._userId = user.id;
   rooms[roomId].clients.push(socket);
 
-  // send current board state (init) to the newly connected client
-  socket.send(JSON.stringify({ type: "init", objects: rooms[roomId].objects }));
-
-  // message handling
   socket.on("message", (msg) => {
     let data;
     try {
       data = JSON.parse(msg.toString());
     } catch {
-      // ignore invalid JSON from clients; don't crash server
       return;
     }
 
-    // attach server-side metadata
-    data.userId = socket._userId;
-    data.timestamp = Date.now();
+    // ---------- IDENTIFY USER ----------
+    if (data.type === "identify") {
 
-    // When client finalizes a new object, persist in room objects and broadcast
-    if (data.type === "object:add" && data.object) {
+      // Generate unique ID for this connection
+      socket._userId = crypto.randomUUID();
+      socket._name = data.name;
+
+      users[socket._userId] = {
+        name: data.name,
+        avatar: `https://api.dicebear.com/8.x/thumbs/svg?seed=${socket._userId}`,
+        color: "#" + Math.floor(Math.random() * 16777215).toString(16)
+      };
+
+      console.log("USER CONNECTED:", users[socket._userId]);
+
+      // send objects after identity
+      socket.send(JSON.stringify({
+        type: "init",
+        objects: rooms[roomId].objects
+      }));
+
+      return;
+    }
+
+    // ---------- ADD OBJECT ----------
+    if (data.type === "object:add") {
       rooms[roomId].objects.push(data.object);
 
       const payload = JSON.stringify({
         type: "object:add",
-        object: data.object,
-        userId: socket._userId,
-        timestamp: Date.now(),
+        object: data.object
       });
 
-      // broadcast to all clients in room (including sender so all keep same state)
-      rooms[roomId].clients.forEach((c) => {
-        if (c.readyState === 1) c.send(payload);
-      });
+      rooms[roomId].clients.forEach(c => c.readyState === 1 && c.send(payload));
       return;
     }
 
-    // When client deletes an object, remove from room objects and broadcast deletion
-    if (data.type === "object:delete" && data.id) {
-      rooms[roomId].objects = rooms[roomId].objects.filter((o) => o.id !== data.id);
+    // ---------- DELETE OBJECT ----------
+    if (data.type === "object:delete") {
+      rooms[roomId].objects = rooms[roomId].objects.filter(
+        obj => obj.id !== data.id
+      );
 
       const payload = JSON.stringify({
         type: "object:delete",
-        id: data.id,
-        userId: socket._userId,
-        timestamp: Date.now(),
+        id: data.id
       });
 
-      rooms[roomId].clients.forEach((c) => {
-        if (c.readyState === 1) c.send(payload);
-      });
+      rooms[roomId].clients.forEach(c => c.readyState === 1 && c.send(payload));
       return;
     }
 
-    // Chat messages: broadcast to other clients only
+    // ---------- CHAT MESSAGE ----------
     if (data.type === "chat") {
-      const payload = JSON.stringify({ ...data, userId: socket._userId, timestamp: Date.now() });
-      rooms[roomId].clients.forEach((c) => {
-        if (c !== socket && c.readyState === 1) c.send(payload);
+      const info = users[socket._userId];
+
+      const payload = JSON.stringify({
+        type: "chat",
+        text: data.text,
+        name: info.name,
+        color: info.color,
+        avatar: info.avatar,
+        timestamp: Date.now()
       });
+
+      rooms[roomId].clients.forEach(c => c.readyState === 1 && c.send(payload));
       return;
     }
-
-    // Unknown message types are ignored for now
   });
 
   socket.on("close", () => {
-    // remove socket from room
-    rooms[roomId].clients = rooms[roomId].clients.filter((c) => c !== socket);
-    // optionally cleanup empty rooms here
+    rooms[roomId].clients = rooms[roomId].clients.filter(c => c !== socket);
   });
 });

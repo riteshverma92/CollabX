@@ -1,8 +1,9 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import WhiteBoard from "../whiteboard/WhiteBoard.jsx";
 import { objectManager } from "../whiteboard/core/objectManager.js";
-import { MessageCircleMore , Minimize2 , Send} from "lucide-react";
+import { MessageCircleMore, Minimize2, Send } from "lucide-react";
+import { Appcontent } from "../context/authContext.jsx";
 
 export default function RoomPage() {
   const { roomId } = useParams();
@@ -10,30 +11,32 @@ export default function RoomPage() {
 
   const [messages, setMessages] = useState([]);
   const [msg, setMsg] = useState("");
-
-  // controls showing/hiding chat
   const [chatOpen, setChatOpen] = useState(true);
-
-
-
   const messagesEndRef = useRef(null);
 
-  // Auto-scroll to bottom when messages update
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  const { userData } = useContext(Appcontent);
+  // userData.userName MUST be available
 
+  // Auto-scroll
   useEffect(() => {
-    scrollToBottom();
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-
+  // WebSocket setup
   useEffect(() => {
     const ws = new WebSocket(`ws://localhost:8080?roomId=${roomId}`);
     wsRef.current = ws;
 
     ws.onopen = () => {
-      console.log("ws open", roomId);
+      console.log("WS Connected");
+
+      // send identity (no userId required)
+      ws.send(
+        JSON.stringify({
+          type: "identify",
+          name: userData.userName,
+        })
+      );
     };
 
     ws.onmessage = (ev) => {
@@ -60,23 +63,11 @@ export default function RoomPage() {
       }
 
       if (data.type === "chat") {
-        setMessages((p) => [...p, data]);
+        setMessages((prev) => [...prev, data]);
       }
     };
 
-    ws.onclose = () => {
-      console.log("ws closed");
-    };
-
-    ws.onerror = (err) => {
-      console.error("ws error", err);
-    };
-
-    return () => {
-      try {
-        ws.close();
-      } catch {}
-    };
+    return () => ws.close();
   }, [roomId]);
 
   const sendChat = () => {
@@ -89,95 +80,124 @@ export default function RoomPage() {
       })
     );
 
-    setMessages((p) => [...p, { text: msg, userId: "you" }]);
     setMsg("");
   };
 
   return (
-   <div className="h-screen w-screen flex flex-row relative overflow-hidden">
-  
-  {/* WHITEBOARD */}
-  <div
-    className="transition-all duration-300 flex-1"
-    style={{ minWidth: 0 }}
-  >
-    <WhiteBoard wsRef={wsRef} />
-  </div>
+    <div className="h-screen w-screen flex flex-row relative overflow-hidden">
+      {/* WHITEBOARD */}
+      <div className="flex-1">
+        <WhiteBoard wsRef={wsRef} />
+      </div>
 
- {/* CHAT PANEL */}
-<div
-  className={`
+      {/* CHAT PANEL */}
+      {/* CHAT PANEL */}
+      <div
+        className={`
     fixed right-0 top-0 h-full bg-[#17212B] text-white shadow-xl border-l border-[#2A3B4D]
-    flex flex-col transition-all duration-300 ease-in-out
+    flex flex-col transition-all duration-300
     ${chatOpen ? "w-80" : "w-0 overflow-hidden"}
   `}
->
-  {/* HEADER */}
-  {chatOpen && (
-    <div className="flex items-center justify-between p-4 bg-[#242F3D] border-b border-[#2A3B4D]">
-      <h2 className="text-xl font-black bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">CollabX Chat</h2>
-      <button
-        onClick={() => setChatOpen(false)}
-        className="p-2 hover:bg-[#1E2B36] rounded cursor-pointer"
       >
-        <Minimize2 className="w-5 h-5 text-gray-300" />
-      </button>
-    </div>
-  )}
+        {/* HEADER (You want this!) */}
+        {chatOpen && (
+          <div className="p-4 flex items-center justify-between bg-[#242F3D] border-b border-[#2A3B4D]">
+            <h2 className="text-xl font-bold text-blue-400">Room Chat</h2>
 
-  {/* MESSAGES */}
-  {chatOpen && (
-    <div className="flex-1 overflow-y-auto p-4 space-y-3 no-scrollbar">
-      {messages.map((m, i) => (
-        <div
-          key={i}
-          className="max-w-[85%] bg-[#1E2B36] p-3 rounded-lg text-sm shadow-sm"
+            <button
+              onClick={() => setChatOpen(false)}
+              className="p-2 hover:bg-[#1E2B36] rounded"
+            >
+              <Minimize2 />
+            </button>
+          </div>
+        )}
+
+        {/* CHAT MESSAGES */}
+        {chatOpen && (
+          <div className="flex-1 p-4 overflow-y-auto space-y-4 no-scrollbar">
+            {messages.map((m, i) => {
+              const plainName = m.name.replace(/#.*/, "");
+              const isMe = plainName === userData.userName;
+
+              return (
+                <div key={i} className="flex w-full">
+                  <div
+                    className={`
+                px-4 py-2 rounded-xl shadow-md text-sm
+                ${
+                  isMe
+                    ? "bg-[#4C98F7] text-white"
+                    : "bg-[#1E2B36] text-gray-200"
+                }
+              `}
+                    style={{
+                      maxWidth: "75%",
+                      wordBreak: "break-word",
+                      whiteSpace: "pre-wrap",
+                    }}
+                  >
+                    {/* TEXT */}
+                    <div>{m.text}</div>
+
+                    {/* TIME + NAME inside bubble */}
+                    <div
+                      className="flex justify-between items-center mt-2 text-[10px] opacity-80"
+                      style={{ minWidth: "150px" }} // keeps spacing consistent
+                    >
+                      <span>
+                        {new Date(m.timestamp).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+
+                      <span
+                        className="font-semibold"
+                        style={{ color: isMe ? "white" : m.color }}
+                      >
+                        {plainName}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+
+            <div ref={messagesEndRef} />
+          </div>
+        )}
+
+        {/* INPUT BAR */}
+        {chatOpen && (
+          <div className="p-4 flex gap-3 bg-[#242F3D] border-t border-[#2A3B4D]">
+            <input
+              className="flex-1 bg-[#0E1621] border border-[#2A3B4D] p-2 rounded-lg text-gray-200"
+              placeholder="Type a message..."
+              value={msg}
+              onChange={(e) => setMsg(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && sendChat()}
+            />
+
+            <button
+              onClick={sendChat}
+              className="p-2 bg-blue-500 hover:bg-blue-600 rounded-lg"
+            >
+              <Send className="text-white" />
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* FLOATING OPEN BUTTON */}
+      {!chatOpen && (
+        <button
+          onClick={() => setChatOpen(true)}
+          className="fixed top-4 right-4 bg-blue-500 px-4 py-2 rounded-lg text-white shadow-lg"
         >
-          {m.text}
-        </div>
-      ))}
-
-      {/* Dummy div for auto-scroll */}
-      <div ref={messagesEndRef} />
-    </div>
-  )}
-
-  {/* INPUT BAR */}
-  {chatOpen && (
-    <div className="p-4 bg-[#242F3D] border-t border-[#2A3B4D] flex items-center gap-3">
-      
-      <input
-        className="flex-1 p-2 bg-[#0E1621] border border-[#2A3B4D] rounded-lg text-gray-200
-        focus:outline-none focus:ring-2 focus:ring-[#2A9DF4]"
-        placeholder="Type a message..."
-        value={msg}
-        onChange={(e) => setMsg(e.target.value)}
-        onKeyDown={(e) => e.key === 'Enter' && sendChat()}
-      />
-
-      <button
-        onClick={sendChat}
-        className="p-2 bg-[#4d98d5] hover:bg-[#3279a9]  rounded-lg transition shadow-md"
-      >
-        <Send className="text-white" />
-      </button>
-    </div>
-  )}
-</div>
-
-{/* OPEN CHAT BUTTON */}
-{!chatOpen && (
-  <button
-    onClick={() => setChatOpen(true)}
-    className="fixed right-4 top-4 z-50 bg-[#4d98d5] hover:bg-[#3279a9] cursor-pointer px-4 py-2 rounded-lg shadow-lg font-semibold text-white transition"
-  >
-    <MessageCircleMore />
-  </button>
-
-
-
-)}
-
+          <MessageCircleMore />
+        </button>
+      )}
     </div>
   );
 }

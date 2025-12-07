@@ -16,6 +16,7 @@ export const showUserProfile = async (req, res) => {
     return res.status(200).json({
       success: true,
       userData: {
+        userID : userfromdatabase._id,
         userName: userfromdatabase.userName,
         email: userfromdatabase.email
       }
