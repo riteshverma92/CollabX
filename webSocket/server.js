@@ -47,12 +47,12 @@ wss.on("connection", (socket, req) => {
       return;
     }
 
-    // ---------- IDENTIFY USER ----------
+  
     if (data.type === "identify") {
 
-      // Generate unique ID for this connection
-      socket._userId = crypto.randomUUID();
+      socket._userId = data.unique_id
       socket._name = data.name;
+
 
       users[socket._userId] = {
         name: data.name,
@@ -60,7 +60,7 @@ wss.on("connection", (socket, req) => {
         color: "#" + Math.floor(Math.random() * 16777215).toString(16)
       };
 
-      console.log("USER CONNECTED:", users[socket._userId]);
+
 
       // send objects after identity
       socket.send(JSON.stringify({

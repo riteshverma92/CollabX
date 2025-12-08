@@ -15,7 +15,7 @@ export default function RoomPage() {
   const messagesEndRef = useRef(null);
 
   const { userData } = useContext(Appcontent);
-  // userData.userName MUST be available
+ 
 
   // Auto-scroll
   useEffect(() => {
@@ -34,6 +34,7 @@ export default function RoomPage() {
       ws.send(
         JSON.stringify({
           type: "identify",
+          unique_id : userData.userID,
           name: userData.userName,
         })
       );
