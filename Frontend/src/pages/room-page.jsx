@@ -15,12 +15,27 @@ export default function RoomPage() {
   const messagesEndRef = useRef(null);
 
   const { userData } = useContext(Appcontent);
- 
 
   // Auto-scroll
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // ------------------------------------------------------
+  // ✨ CUSTOM CURSOR ONLY INSIDE WHITEBOARD AREA
+  // ------------------------------------------------------
+  useEffect(() => {
+    const cursor = document.getElementById("customCursor");
+
+    const moveCursor = (e) => {
+      cursor.style.left = `${e.pageX}px`;
+      cursor.style.top = `${e.pageY}px`;
+    };
+
+    window.addEventListener("mousemove", moveCursor);
+    return () => window.removeEventListener("mousemove", moveCursor);
+  }, []);
+  // ------------------------------------------------------
 
   // WebSocket setup
   useEffect(() => {
@@ -30,11 +45,10 @@ export default function RoomPage() {
     ws.onopen = () => {
       console.log("WS Connected");
 
-      // send identity (no userId required)
       ws.send(
         JSON.stringify({
           type: "identify",
-          unique_id : userData.userID,
+          unique_id: userData.userID,
           name: userData.userName,
         })
       );
@@ -86,12 +100,41 @@ export default function RoomPage() {
 
   return (
     <div className="h-screen w-screen flex flex-row relative overflow-hidden">
-      {/* WHITEBOARD */}
-      <div className="flex-1">
+
+      {/* CUSTOM CURSOR — ONLY FOR WHITEBOARD */}
+      <div
+        id="customCursor"
+        className="
+          pointer-events-none 
+          absolute 
+          w-5 h-5 rounded-full 
+          bg-red-500/10 
+          border border-red-500/30 
+          shadow-[0_0_8px_rgba(255,0,0,0.25)]
+          -translate-x-1/2 -translate-y-1/2 
+          z-50
+          hidden
+        "
+      >
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="w-1 h-1 bg-[#615e5e] rounded-full"></div>
+        </div>
+      </div>
+
+
+      {/* WHITEBOARD AREA */}
+      <div
+        className="flex-1 cursor-none"
+        onMouseEnter={() => {
+          document.getElementById("customCursor").classList.remove("hidden");
+        }}
+        onMouseLeave={() => {
+          document.getElementById("customCursor").classList.add("hidden");
+        }}
+      >
         <WhiteBoard wsRef={wsRef} />
       </div>
 
-      {/* CHAT PANEL */}
       {/* CHAT PANEL */}
       <div
         className={`
@@ -100,7 +143,6 @@ export default function RoomPage() {
     ${chatOpen ? "w-80" : "w-0 overflow-hidden"}
   `}
       >
-        {/* HEADER (You want this!) */}
         {chatOpen && (
           <div className="p-4 flex items-center justify-between bg-[#242F3D] border-b border-[#2A3B4D]">
             <h2 className="text-xl font-bold text-blue-400">Room Chat</h2>
@@ -114,7 +156,6 @@ export default function RoomPage() {
           </div>
         )}
 
-        {/* CHAT MESSAGES */}
         {chatOpen && (
           <div className="flex-1 p-4 overflow-y-auto space-y-4 no-scrollbar">
             {messages.map((m, i) => {
@@ -138,13 +179,11 @@ export default function RoomPage() {
                       whiteSpace: "pre-wrap",
                     }}
                   >
-                    {/* TEXT */}
                     <div>{m.text}</div>
 
-                    {/* TIME + NAME inside bubble */}
                     <div
                       className="flex justify-between items-center mt-2 text-[10px] opacity-80"
-                      style={{ minWidth: "150px" }} // keeps spacing consistent
+                      style={{ minWidth: "150px" }}
                     >
                       <span>
                         {new Date(m.timestamp).toLocaleTimeString([], {
@@ -169,7 +208,6 @@ export default function RoomPage() {
           </div>
         )}
 
-        {/* INPUT BAR */}
         {chatOpen && (
           <div className="p-4 flex gap-3 bg-[#242F3D] border-t border-[#2A3B4D]">
             <input
@@ -190,7 +228,6 @@ export default function RoomPage() {
         )}
       </div>
 
-      {/* FLOATING OPEN BUTTON */}
       {!chatOpen && (
         <button
           onClick={() => setChatOpen(true)}

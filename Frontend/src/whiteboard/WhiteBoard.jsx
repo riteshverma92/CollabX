@@ -279,9 +279,7 @@ export default function WhiteBoard({ wsRef }) {
     setTextInput(null);
   };
 
-  // --------------------------
-  // Zoom + Reset
-  // --------------------------
+
   const zoomIn = () => setScale((s) => Math.min(5, +(s + 0.1).toFixed(2)));
   const zoomOut = () => setScale((s) => Math.max(0.2, +(s - 0.1).toFixed(2)));
   const resetView = () => {

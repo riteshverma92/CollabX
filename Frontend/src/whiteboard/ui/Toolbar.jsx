@@ -23,7 +23,7 @@ export default function Toolbar({ activeTool, setTool, zoomIn, zoomOut, resetVie
   );
 
   return (
-    <div className="absolute top-4 left-4 z-50 px-3 py-2 bg-white rounded-lg flex gap-2 shadow-lg">
+    <div className="absolute top-4 left-4 z-50 px-3 py-2 bg-white rounded-lg flex gap-2 shadow-lg cursor-default">
 
       {ToolButton("rect", "/rectangle.png")}
       {ToolButton("circle", "/record.png")}
