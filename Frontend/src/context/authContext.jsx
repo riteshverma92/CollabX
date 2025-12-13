@@ -27,7 +27,7 @@ export const AppContextProvider = (props) => {
       setIsLoggedin(false);
       setUserData(null);
     } finally {
-      setLoading(false); // ⭐ VERY IMPORTANT
+      setLoading(false); 
     }
   };
 

@@ -6,7 +6,7 @@ import Loading from "../pages/Loading";
 import { Appcontent } from "../context/authContext";
 
 export default function Navbar() {
-  const { userData, loading } = useContext(Appcontent);
+  const { userData, loading , setUserData, setIsLoggedin} = useContext(Appcontent);
   const navigate = useNavigate();
 
   const [title, setTitle] = useState("");
@@ -83,11 +83,13 @@ export default function Navbar() {
     try {
       await axios.post(
         "http://localhost:5000/api/auth/logout",
-        {},
         { withCredentials: true }
       );
-      navigate("/login");
+      
       toast.success("Logged out");
+      setUserData(null);
+      setIsLoggedin(false)
+      navigate("/login");
     } catch {
       toast.error("Logout failed");
     }

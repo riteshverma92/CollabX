@@ -6,6 +6,7 @@ export default function LandingPage() {
   const navigate = useNavigate();
 
   const {isLoggedin} = useContext(Appcontent);
+  
   useEffect(() => {
     /* Spotlight cursor */
     const spot = document.getElementById("spot");

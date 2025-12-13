@@ -149,7 +149,7 @@ export default function RoomPage() {
 
             <button
               onClick={() => setChatOpen(false)}
-              className="p-2 hover:bg-[#1E2B36] rounded"
+              className="p-2 hover:bg-[#1E2B36] rounded cursor-pointer"
             >
               <Minimize2 />
             </button>
@@ -222,7 +222,7 @@ export default function RoomPage() {
               onClick={sendChat}
               className="p-2 bg-blue-500 hover:bg-blue-600 rounded-lg"
             >
-              <Send className="text-white" />
+              <Send className="text-white cursor-pointer" />
             </button>
           </div>
         )}
@@ -231,7 +231,7 @@ export default function RoomPage() {
       {!chatOpen && (
         <button
           onClick={() => setChatOpen(true)}
-          className="fixed top-4 right-4 bg-blue-500 px-4 py-2 rounded-lg text-white shadow-lg"
+          className="fixed top-4 right-4 bg-blue-500 px-4 py-2 rounded-lg text-white shadow-lg cursor-pointer"
         >
           <MessageCircleMore />
         </button>
