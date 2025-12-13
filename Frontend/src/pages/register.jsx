@@ -40,7 +40,7 @@ const Register = () => {
   };
 
   return (
-    <div className="bg-gray-950 text-white flex items-center justify-center min-h-screen px-6 relative">
+    <div className="  bg-gray-950 text-white flex items-center justify-center min-h-screen px-6 relative">
       {/* Background */}
       <div className="absolute top-20 left-10 w-72 h-72 bg-blue-500/20 blur-[140px] rounded-full"></div>
       <div className="absolute bottom-20 right-10 w-80 h-80 bg-purple-500/20 blur-[150px] rounded-full"></div>
@@ -61,7 +61,7 @@ const Register = () => {
             <label className="text-gray-300 text-sm">Full Name</label>
             <input
               type="text"
-              placeholder="John Doe"
+              placeholder="Enter Name"
               value={userName}
               onChange={(e) =>
                 setFormData({ ...formData, userName: e.target.value })
@@ -77,7 +77,7 @@ const Register = () => {
             <label className="text-gray-300 text-sm">Email</label>
             <input
               type="email"
-              placeholder="email@example.com"
+              placeholder="xyz123@gmail.com"
               value={email}
               onChange={(e) =>
                 setFormData({ ...formData, email: e.target.value })

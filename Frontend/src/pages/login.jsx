@@ -70,7 +70,7 @@ const Login = () => {
             <label className="text-gray-300 text-sm font-medium">Email</label>
             <input
               type="email"
-              placeholder="name@company.com"
+              placeholder="xyz123@gmail.com"
               value={email}
               onChange={(e) =>
                 setformData({ ...formData, email: e.target.value })   // <-- FIXED
