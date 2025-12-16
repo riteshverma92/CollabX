@@ -13,13 +13,12 @@ import ProtectedRoute from "./pages/ProtectedRoute.jsx";
 import Dashboard from "./pages/dashboard.jsx";
 import RoomPage from "./pages/room-page.jsx";
 
-// 🔐 Redux thunks
+
 import { checkAuth, getUserData } from "./redux/slices/authSlice.js";
 
 function App() {
   const dispatch = useDispatch();
 
-  // 🔁 AUTH REHYDRATION (VERY IMPORTANT)
   useEffect(() => {
     dispatch(checkAuth()).then((res) => {
       if (res.payload === true) {
@@ -33,18 +32,14 @@ function App() {
       <ToastContainer />
 
       <Routes>
-        {/* ===== PUBLIC ROUTES ===== */}
+       
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/otp-verification" element={<OtpVerfication />} />
         <Route path="/forgot-password" element={<Forgotpassword />} />
-        <Route
-          path="/verify-otp-forgot-password"
-          element={<VerifyOtp />}
+        <Route path="/verify-otp-forgot-password" element={<VerifyOtp />}
         />
-
-        {/* ===== PROTECTED ROUTES ===== */}
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/room/:roomId" element={<RoomPage />} />
