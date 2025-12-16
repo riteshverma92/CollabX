@@ -1,6 +1,5 @@
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
-import { Appcontent } from "../context/authContext";
 import axios from "axios";
 import { toast } from "react-toastify";
 
@@ -12,6 +11,8 @@ import {
   CircleMinus,
   Loader,
 } from "lucide-react";
+
+import { useSelector } from "react-redux";
 import Loading from "./Loading";
 
 // ------------------------------
@@ -49,7 +50,8 @@ function Avatar({ name }) {
 // ------------------------------
 
 export default function Dashboard() {
-  const { userData } = useContext(Appcontent);
+  // 🔁 CONTEXT ➜ REDUX (ONLY CHANGE)
+  const { userData } = useSelector((state) => state.auth);
 
   const [ownRooms, setOwnRooms] = useState([]);
   const [joinedRooms, setJoinedRooms] = useState([]);
@@ -92,14 +94,11 @@ export default function Dashboard() {
     }
   };
 
-
-
-  // Remove Room
-
-  const removeRoom = async(roomId) =>{
+  // Remove room
+  const removeRoom = async (roomId) => {
     try {
       const res = await axios.delete(
-       "http://localhost:5000/api/room/remove-room",
+        "http://localhost:5000/api/room/remove-room",
         { data: { roomId }, withCredentials: true }
       );
 
@@ -110,8 +109,7 @@ export default function Dashboard() {
     } catch {
       toast.error("Error deleting room");
     }
-
-  }
+  };
 
   // Copy code
   const copyRoomCode = async (code) => {
@@ -131,7 +129,7 @@ export default function Dashboard() {
   }, []);
 
   if (loading) {
-    return <Loader></Loader>;
+    return <Loading/>;
   }
 
   return (
@@ -154,41 +152,29 @@ export default function Dashboard() {
 
         {/* QUICK STATS */}
         <div className="flex flex-wrap gap-6 mt-6">
-          {/* CREATED ROOMS CARD */}
-          <div
-            className="flex items-center gap-4 
-            bg-[hsl(var(--card))] border border-[hsl(var(--border))] 
-            rounded-xl px-6 py-5 min-w-[260px]"
-          >
+          {/* CREATED ROOMS */}
+          <div className="flex items-center gap-4 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl px-6 py-5 min-w-[260px]">
             <Crown className="w-7 h-7 text-[hsl(var(--primary))]" />
-
-            <div className="flex flex-col justify-center leading-tight">
+            <div>
               <p className="text-3xl font-semibold">{ownRooms.length}</p>
               <p className="text-white/40 text-sm mt-1">Created Rooms</p>
             </div>
           </div>
 
-          {/* JOINED ROOMS CARD */}
-          <div
-            className="flex items-center gap-4 
-            bg-[hsl(var(--card))] border border-[hsl(var(--border))] 
-            rounded-xl px-6 py-5 min-w-[260px]"
-          >
+          {/* JOINED ROOMS */}
+          <div className="flex items-center gap-4 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl px-6 py-5 min-w-[260px]">
             <Users className="w-7 h-7 text-[hsl(var(--accent))]" />
-
-            <div className="flex flex-col justify-center leading-tight">
+            <div>
               <p className="text-3xl font-semibold">{joinedRooms.length}</p>
               <p className="text-white/40 text-sm mt-1">Joined Rooms</p>
             </div>
           </div>
         </div>
 
-        {/* Created Rooms */}
+        {/* CREATED ROOMS */}
         <h2 className="text-xl font-medium mt-12 mb-4">Your Created Rooms</h2>
 
-        {loading ? (
-          <p className="text-white/40">Loading...</p>
-        ) : ownRooms.length === 0 ? (
+        {ownRooms.length === 0 ? (
           <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-10 text-center">
             <Crown className="w-10 h-10 mx-auto text-white/20 mb-4" />
             <p className="text-white/50">No rooms created yet.</p>
@@ -198,16 +184,13 @@ export default function Dashboard() {
             {ownRooms.map((room) => (
               <div
                 key={room._id}
-                className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-5 
-                hover:bg-white/[0.06] transition cursor-pointer"
+                className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-5 hover:bg-white/[0.06] transition cursor-pointer"
                 onClick={() => (window.location.href = `/room/${room._id}`)}
               >
                 <div className="flex justify-between mb-4">
                   <h3 className="font-medium truncate">{room.title}</h3>
 
-                  {/* BUTTONS */}
                   <div className="flex gap-2">
-                    {/* SHARE — GREEN HOVER */}
                     <button
                       className="p-1.5 rounded-lg transition group"
                       onClick={(e) => {
@@ -218,7 +201,6 @@ export default function Dashboard() {
                       <Share2 className="w-4 h-4 text-white/50 group-hover:text-[hsl(var(--accent))]" />
                     </button>
 
-                    {/* DELETE — RED HOVER */}
                     <button
                       className="p-1.5 rounded-lg transition group"
                       onClick={(e) => {
@@ -231,35 +213,18 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                {/* REAL AVATARS */}
-                {/* OVERLAPPING CIRCLES */}
-                <div className="flex justify-between items-center mt-4">
-                  {/* LEFT — Room Code */}
-                  <p className="text-sm text-white/40">
-                    Room Code:
-                    <span className="ml-2 px-2 py-1 text-xs rounded-md bg-white/[0.06] border border-[hsl(var(--border))]">
-                      {room.roomCode}
-                    </span>
-                  </p>
-
-                  {/* RIGHT — Overlapping Circles */}
-                  <div className="flex -space-x-3">
-                    {/* Circle 1 */}
-                    <div className="w-7 h-7 rounded-full bg-gray-600 border-2 border-gray-800"></div>
-
-                    {/* Circle 2 */}
-                    <div className="w-7 h-7 rounded-full bg-gray-600 border-2 border-gray-800"></div>
-
-                    {/* Circle 3 */}
-                    <div className="w-7 h-7 rounded-full bg-gray-600 border-2 border-gray-800"></div>
-                  </div>
-                </div>
+                <p className="text-sm text-white/40">
+                  Room Code:
+                  <span className="ml-2 px-2 py-1 text-xs rounded-md bg-white/[0.06] border">
+                    {room.roomCode}
+                  </span>
+                </p>
               </div>
             ))}
           </div>
         )}
 
-        {/* Joined Rooms */}
+        {/* JOINED ROOMS */}
         <h2 className="text-xl font-medium mt-12 mb-4">Rooms You Joined</h2>
 
         {joinedRooms.length === 0 ? (
@@ -272,14 +237,12 @@ export default function Dashboard() {
             {joinedRooms.map((room) => (
               <div
                 key={room._id}
-                className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-5 
-                hover:bg-white/[0.06] transition cursor-pointer"
+                className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-5 hover:bg-white/[0.06] transition cursor-pointer"
                 onClick={() => (window.location.href = `/room/${room._id}`)}
               >
                 <div className="flex justify-between mb-4">
                   <h3 className="font-medium truncate">{room.title}</h3>
 
-                  {/* SHREDDER — BLUE HOVER */}
                   <button
                     className="p-1.5 rounded-lg transition group"
                     onClick={(e) => {
@@ -291,29 +254,12 @@ export default function Dashboard() {
                   </button>
                 </div>
 
-                {/* REAL AVATARS */}
-
-                <div className="flex justify-between items-center mt-4">
-                  {/* LEFT — Room Code */}
-                  <p className="text-sm text-white/40">
-                    Room Code:
-                    <span className="ml-2 px-2 py-1 text-xs rounded-md bg-white/[0.06] border border-[hsl(var(--border))]">
-                      {room.roomCode}
-                    </span>
-                  </p>
-
-                  {/* RIGHT — Overlapping Circles */}
-                  <div className="flex -space-x-3">
-                    {/* Circle 1 */}
-                    <div className="w-7 h-7 rounded-full bg-gray-600 border-2 border-gray-800"></div>
-
-                    {/* Circle 2 */}
-                    <div className="w-7 h-7 rounded-full bg-gray-600 border-2 border-gray-800"></div>
-
-                    {/* Circle 3 */}
-                    <div className="w-7 h-7 rounded-full bg-gray-600 border-2 border-gray-800"></div>
-                  </div>
-                </div>
+                <p className="text-sm text-white/40">
+                  Room Code:
+                  <span className="ml-2 px-2 py-1 text-xs rounded-md bg-white/[0.06] border">
+                    {room.roomCode}
+                  </span>
+                </p>
               </div>
             ))}
           </div>

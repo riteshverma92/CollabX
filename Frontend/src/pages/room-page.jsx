@@ -1,9 +1,10 @@
-import React, { useContext, useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
+import { useSelector } from "react-redux";
+
 import WhiteBoard from "../whiteboard/WhiteBoard.jsx";
 import { objectManager } from "../whiteboard/core/objectManager.js";
 import { MessageCircleMore, Minimize2, Send } from "lucide-react";
-import { Appcontent } from "../context/authContext.jsx";
 
 export default function RoomPage() {
   const { roomId } = useParams();
@@ -14,7 +15,8 @@ export default function RoomPage() {
   const [chatOpen, setChatOpen] = useState(true);
   const messagesEndRef = useRef(null);
 
-  const { userData } = useContext(Appcontent);
+  // 🔁 CONTEXT → REDUX (ONLY CHANGE)
+  const { userData } = useSelector((state) => state.auth);
 
   // Auto-scroll
   useEffect(() => {
@@ -28,6 +30,7 @@ export default function RoomPage() {
     const cursor = document.getElementById("customCursor");
 
     const moveCursor = (e) => {
+      if (!cursor) return;
       cursor.style.left = `${e.pageX}px`;
       cursor.style.top = `${e.pageY}px`;
     };
@@ -39,6 +42,8 @@ export default function RoomPage() {
 
   // WebSocket setup
   useEffect(() => {
+    if (!userData) return;
+
     const ws = new WebSocket(`ws://localhost:8080?roomId=${roomId}`);
     wsRef.current = ws;
 
@@ -83,7 +88,7 @@ export default function RoomPage() {
     };
 
     return () => ws.close();
-  }, [roomId]);
+  }, [roomId, userData]);
 
   const sendChat = () => {
     if (!msg.trim()) return;
@@ -100,7 +105,6 @@ export default function RoomPage() {
 
   return (
     <div className="h-screen w-screen flex flex-row relative overflow-hidden">
-
       {/* CUSTOM CURSOR — ONLY FOR WHITEBOARD */}
       <div
         id="customCursor"
@@ -121,16 +125,15 @@ export default function RoomPage() {
         </div>
       </div>
 
-
       {/* WHITEBOARD AREA */}
       <div
         className="flex-1 cursor-none"
-        onMouseEnter={() => {
-          document.getElementById("customCursor").classList.remove("hidden");
-        }}
-        onMouseLeave={() => {
-          document.getElementById("customCursor").classList.add("hidden");
-        }}
+        onMouseEnter={() =>
+          document.getElementById("customCursor")?.classList.remove("hidden")
+        }
+        onMouseLeave={() =>
+          document.getElementById("customCursor")?.classList.add("hidden")
+        }
       >
         <WhiteBoard wsRef={wsRef} />
       </div>
@@ -138,10 +141,10 @@ export default function RoomPage() {
       {/* CHAT PANEL */}
       <div
         className={`
-    fixed right-0 top-0 h-full bg-[#17212B] text-white shadow-xl border-l border-[#2A3B4D]
-    flex flex-col transition-all duration-300
-    ${chatOpen ? "w-80" : "w-0 overflow-hidden"}
-  `}
+          fixed right-0 top-0 h-full bg-[#17212B] text-white shadow-xl 
+          border-l border-[#2A3B4D] flex flex-col transition-all duration-300
+          ${chatOpen ? "w-80" : "w-0 overflow-hidden"}
+        `}
       >
         {chatOpen && (
           <div className="p-4 flex items-center justify-between bg-[#242F3D] border-b border-[#2A3B4D]">
@@ -160,19 +163,19 @@ export default function RoomPage() {
           <div className="flex-1 p-4 overflow-y-auto space-y-4 no-scrollbar">
             {messages.map((m, i) => {
               const plainName = m.name.replace(/#.*/, "");
-              const isMe = plainName === userData.userName;
+              const isMe = plainName === userData?.userName;
 
               return (
                 <div key={i} className="flex w-full">
                   <div
                     className={`
-                px-4 py-2 rounded-xl shadow-md text-sm
-                ${
-                  isMe
-                    ? "bg-[#4C98F7] text-white"
-                    : "bg-[#1E2B36] text-gray-200"
-                }
-              `}
+                      px-4 py-2 rounded-xl shadow-md text-sm
+                      ${
+                        isMe
+                          ? "bg-[#4C98F7] text-white"
+                          : "bg-[#1E2B36] text-gray-200"
+                      }
+                    `}
                     style={{
                       maxWidth: "75%",
                       wordBreak: "break-word",

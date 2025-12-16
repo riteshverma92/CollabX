@@ -1,18 +1,13 @@
-import { useContext } from "react";
 import { Navigate, Outlet } from "react-router-dom";
-import { Appcontent } from "../context/authContext";
+import { useSelector } from "react-redux";
 import Loading from "./Loading";
 
 const ProtectedRoute = () => {
-  const { isLoggedin, loading } = useContext(Appcontent);
+  const { isLoggedin, authChecked } = useSelector((state) => state.auth);
 
-  // Wait during backend check
-  if (loading) return <Loading />;
-
-  // Not logged in → redirect
+  if (!authChecked) return <Loading />;
   if (!isLoggedin) return <Navigate to="/login" replace />;
 
-  // Logged in → allow route inside
   return <Outlet />;
 };
 

@@ -31,22 +31,30 @@ export const loginUser = createAsyncThunk(
 // 🔄 Check auth (on refresh)
 export const checkAuth = createAsyncThunk(
   "auth/checkAuth",
-  async () => {
-    const { data } = await axios.get(
-      "http://localhost:5000/api/auth/is-auth"
-    );
-    return data.success; // true / false
+  async (_, { rejectWithValue }) => {
+    try {
+      const { data } = await axios.get(
+        "http://localhost:5000/api/auth/is-auth"
+      );
+      return data.success; // true / false
+    } catch {
+      return rejectWithValue(false);
+    }
   }
 );
 
 // 👤 Fetch user profile
 export const getUserData = createAsyncThunk(
   "auth/getUserData",
-  async () => {
-    const { data } = await axios.get(
-      "http://localhost:5000/api/user/profile"
-    );
-    return data.userData || null;
+  async (_, { rejectWithValue }) => {
+    try {
+      const { data } = await axios.get(
+        "http://localhost:5000/api/user/profile"
+      );
+      return data.userData;
+    } catch {
+      return rejectWithValue(null);
+    }
   }
 );
 
@@ -56,17 +64,15 @@ export const getUserData = createAsyncThunk(
 
 const authSlice = createSlice({
   name: "auth",
+
   initialState: {
     isLoggedin: false,
     userData: null,
     loading: false,
+    authChecked: false, // 🔥 IMPORTANT
   },
 
-  /* =========================
-     SYNC REDUCERS (for UI)
-  ========================= */
   reducers: {
-    // Context-style setters (to keep UI unchanged)
     setIsLoggedin: (state, action) => {
       state.isLoggedin = action.payload;
     },
@@ -79,17 +85,14 @@ const authSlice = createSlice({
       state.loading = action.payload;
     },
 
-    // Logout
     logout: (state) => {
       state.isLoggedin = false;
       state.userData = null;
       state.loading = false;
+      state.authChecked = true; // 🔥 already known
     },
   },
 
-  /* =========================
-     ASYNC REDUCERS
-  ========================= */
   extraReducers: (builder) => {
     builder
       /* ---- LOGIN ---- */
@@ -100,11 +103,13 @@ const authSlice = createSlice({
         state.isLoggedin = true;
         state.userData = action.payload;
         state.loading = false;
+        state.authChecked = true; // 🔥
       })
       .addCase(loginUser.rejected, (state) => {
         state.isLoggedin = false;
         state.userData = null;
         state.loading = false;
+        state.authChecked = true; // 🔥
       })
 
       /* ---- CHECK AUTH ---- */
@@ -113,14 +118,19 @@ const authSlice = createSlice({
       })
       .addCase(checkAuth.fulfilled, (state, action) => {
         state.isLoggedin = action.payload;
-        if (!action.payload) state.loading = false;
+        state.loading = false;
+        state.authChecked = true; // 🔥 MOST IMPORTANT
       })
       .addCase(checkAuth.rejected, (state) => {
         state.isLoggedin = false;
         state.loading = false;
+        state.authChecked = true; // 🔥
       })
 
       /* ---- GET USER DATA ---- */
+      .addCase(getUserData.pending, (state) => {
+        state.loading = true;
+      })
       .addCase(getUserData.fulfilled, (state, action) => {
         state.userData = action.payload;
         state.loading = false;
@@ -132,7 +142,9 @@ const authSlice = createSlice({
   },
 });
 
-export default authSlice.reducer;
+/* =========================
+   EXPORTS
+========================= */
 
 export const {
   logout,
@@ -140,3 +152,5 @@ export const {
   setUserData,
   setLoading,
 } = authSlice.actions;
+
+export default authSlice.reducer;

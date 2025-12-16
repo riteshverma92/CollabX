@@ -1,17 +1,14 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import "./index.css";   
-import App from './App.jsx'
-import { BrowserRouter } from 'react-router-dom'
-import { AppContextProvider } from './context/authContext.jsx'
-
-createRoot(document.getElementById('root')).render(
-  <BrowserRouter>
-  <AppContextProvider>
-    <App></App>
-  </AppContextProvider>
-    
-  </BrowserRouter>
-    
-  
-)
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
+import { Provider } from "react-redux";
+import { store } from "./redux/store/store"; // ✅ named import
+import App from "./App";
+import "./index.css";
+ReactDOM.createRoot(document.getElementById("root")).render(
+  <Provider store={store}>
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
+  </Provider>
+);

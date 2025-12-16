@@ -1,12 +1,13 @@
-import React, { useContext, useEffect } from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Appcontent } from "../context/authContext";
+import { useSelector } from "react-redux";
 
 export default function LandingPage() {
   const navigate = useNavigate();
 
-  const {isLoggedin} = useContext(Appcontent);
-  
+  // 🔁 CONTEXT → REDUX (ONLY CHANGE)
+  const { isLoggedin } = useSelector((state) => state.auth);
+
   useEffect(() => {
     /* Spotlight cursor */
     const spot = document.getElementById("spot");
@@ -22,6 +23,7 @@ export default function LandingPage() {
     const cards = document.querySelectorAll(".tcard");
     let i = 0;
     const slider = setInterval(() => {
+      if (cards.length === 0) return;
       cards[i].classList.remove("active");
       i = (i + 1) % cards.length;
       cards[i].classList.add("active");
@@ -54,10 +56,9 @@ export default function LandingPage() {
     };
   }, []);
 
-  const handleClick = async () => {
-   
+  const handleClick = () => {
     if (isLoggedin) {
-      navigate("/dashboard"); // or any page for logged-in users
+      navigate("/dashboard");
     } else {
       navigate("/login");
     }
@@ -114,15 +115,9 @@ export default function LandingPage() {
           </h1>
 
           <div className="hidden md:flex gap-10 text-gray-300 font-medium">
-            <a href="#features" className="hover:text-white transition">
-              Features
-            </a>
-            <a href="#testimonials" className="hover:text-white transition">
-              Reviews
-            </a>
-            <a href="#about" className="hover:text-white transition">
-              About
-            </a>
+            <a href="#features" className="hover:text-white transition">Features</a>
+            <a href="#testimonials" className="hover:text-white transition">Reviews</a>
+            <a href="#about" className="hover:text-white transition">About</a>
           </div>
 
           <button className="block md:hidden text-3xl">☰</button>
@@ -161,7 +156,6 @@ export default function LandingPage() {
           >
             Start Working
           </button>
-
           {/* PARALLAX CONTAINER */}
           <div
             id="parallaxContainer"
