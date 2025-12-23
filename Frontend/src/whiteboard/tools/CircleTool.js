@@ -1,7 +1,7 @@
 import BaseTool from "./BaseTool.js";
 import { objectManager } from "../core/objectManager.js";
 
-export default class RectTool extends BaseTool {
+export default class CircleTool extends BaseTool {
   constructor(board) {
     super(board);
     this.preview = null;
@@ -10,25 +10,21 @@ export default class RectTool extends BaseTool {
   onPointerDown(e) {
     this.board.startDrawing(e);
     const { x, y } = this.board.toBoardCoords(e);
-
-    this.preview = { type: "rect", x, y, w: 0, h: 0 };
+    this.preview = { type: "circle", x, y, r: 0 };
     this.board.setPreview(this.preview);
   }
 
   onPointerMove(e) {
-    if (!this.board.isDrawing) return;
-    if (!this.preview) return; // ✔ prevents crashing
+    if (!this.board.isDrawing || !this.preview) return;
 
     const { x, y } = this.board.toBoardCoords(e);
-    const start = this.board.startPos;
+    const s = this.board.startPos;
 
-    this.preview.w = x - start.x;
-    this.preview.h = y - start.y;
-
+    this.preview.r = Math.hypot(x - s.x, y - s.y);
     this.board.setPreview(this.preview);
   }
 
-  onPointerUp(e) {
+  onPointerUp() {
     if (!this.preview) return;
 
     const obj = {
@@ -48,12 +44,13 @@ export default class RectTool extends BaseTool {
 
   drawPreview(ctx) {
     if (!this.preview) return;
-    const p = this.preview;
 
     ctx.save();
-    ctx.setLineDash([5, 3]);
+    ctx.setLineDash([5, 5]);
     ctx.strokeStyle = "red";
-    ctx.strokeRect(p.x, p.y, p.w, p.h);
+    ctx.beginPath();
+    ctx.arc(this.preview.x, this.preview.y, this.preview.r, 0, Math.PI * 2);
+    ctx.stroke();
     ctx.restore();
   }
 }
