@@ -44,7 +44,7 @@ export default class CircleTool extends BaseTool {
 
   drawPreview(ctx) {
     if (!this.preview) return;
-
+  // NoW 
     ctx.save();
     ctx.setLineDash([5, 5]);
     ctx.strokeStyle = "red";
@@ -54,3 +54,5 @@ export default class CircleTool extends BaseTool {
     ctx.restore();
   }
 }
+
+
