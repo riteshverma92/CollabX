@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { MessageCircleMore, Minimize2, Send } from "lucide-react";
+import { MessageCircleMore, Minimize2, Send, Users } from "lucide-react";
 import Board from "../WhiteBoard2/Board.jsx";
 
 export default function RoomPage() {
@@ -10,11 +10,15 @@ export default function RoomPage() {
 
   const [messages, setMessages] = useState([]);
   const [msg, setMsg] = useState("");
-  const [chatOpen, setChatOpen] = useState(true);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [OnlineOpen, setOnlineOpen] = useState(false);
+
   const [boardEvent, setBoardEvent] = useState(null);
 
   const messagesEndRef = useRef(null);
   const { userData } = useSelector((state) => state.auth);
+
+  const [allUsers, setAllUsers] = useState({});
 
   // ---------------- AUTO SCROLL CHAT ----------------
   const autoScroll = (smooth = true) => {
@@ -72,11 +76,17 @@ export default function RoomPage() {
         return;
       }
 
+      if (data.type === "user:joined" || data.type === "user:left") {
+        setAllUsers(data.users);
+        return;
+      }
+
       if (data.type === "chat") {
         setMessages((prev) => [...prev, data]);
         return;
       }
 
+      // ✅ ONLY board-related events reach here
       setBoardEvent(data);
     };
 
@@ -130,7 +140,7 @@ export default function RoomPage() {
 
       {/* CHAT PANEL */}
       <div
-  className={`
+        className={`
     fixed right-0 top-0 h-screen overflow-hidden
     bg-[#17212B] text-white
     transition-all duration-300
@@ -139,8 +149,7 @@ export default function RoomPage() {
     ${chatOpen ? "w-80" : "w-0 overflow-hidden"}
     flex flex-col
   `}
->
-
+      >
         {chatOpen && (
           <>
             {/* HEADER */}
@@ -249,16 +258,84 @@ export default function RoomPage() {
         )}
       </div>
 
-      {/* OPEN CHAT BUTTON */}
-      {!chatOpen && (
-        <button
-          onClick={() => {
-            setChatOpen(true);
-          }}
-          className="fixed top-4 right-3 bg-blue-400 p-2 rounded text-white cursor-pointer"
-        >
-          <MessageCircleMore />
+
+     {OnlineOpen && (
+  <div
+  className={`
+    fixed right-0 top-0 h-screen
+    bg-[#17212B] text-white
+    shadow-[-4px_0_12px_rgba(255,255,255,0.1)]
+    transition-all duration-300 ease-in-out
+    ${OnlineOpen ? "w-64" : "w-0 overflow-hidden"}
+    flex flex-col
+  `}
+>
+  {OnlineOpen && (
+    <>
+      {/* HEADER */}
+      <div className="p-4 flex justify-between items-center bg-[#242F3D]">
+        <h2 className="text-blue-400 font-bold">Online Users</h2>
+        <button onClick={() => setOnlineOpen(false)}>
+          <Minimize2 />
         </button>
+      </div>
+
+      {/* USERS LIST */}
+      <div className="flex-1 overflow-y-auto p-3 space-y-3">
+        {Object.values(allUsers).map((user) => (
+          <div
+            key={user.userId}
+            className="flex items-center gap-3 bg-[#1e293b] p-2 rounded"
+          >
+            <img
+              src={user.avatar}
+              alt={user.name}
+              className="w-8 h-8 rounded-full"
+            />
+            <span className="text-sm">{user.name}</span>
+          </div>
+        ))}
+      </div>
+    </>
+  )}
+</div>
+
+)}
+
+      {/* OPEN CHAT BUTTON */}
+      {!chatOpen && !OnlineOpen && (
+        <div className="fixed top-4 right-4 flex items-center gap-2">
+          {/* USER COUNT */}
+          <h3
+            onClick={() =>(setOnlineOpen(true))}
+            className="
+      flex items-center gap-1
+      h-10
+      text-white text-sm
+      px-3 rounded
+      bg-gray-800
+      cursor-pointer
+    "
+          >
+            <Users size={18} />
+            <span>{Object.keys(allUsers).length}</span>
+          </h3>
+
+          {/* CHAT OPEN BUTTON */}
+          <button
+            onClick={() => setChatOpen(true)}
+            className="
+      h-10 w-10
+      flex items-center justify-center
+      bg-blue-500
+      rounded
+      text-white
+      cursor-pointer
+    "
+          >
+            <MessageCircleMore />
+          </button>
+        </div>
       )}
     </div>
   );

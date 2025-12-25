@@ -11,7 +11,7 @@ function Board({ wsRef, events }) {
   const [shapes, setShapes] = useState([]);
   const [tool, setTool] = useState(TOOLS.RECT);
 
-  const [strokeColor, setStrokeColor] = useState("#ffffff");
+  const [strokeColor, setStrokeColor] = useState("#796A35");
   const [strokeSize, setStrokeSize] = useState(3);
 
   const isDrawing = useRef(false);
