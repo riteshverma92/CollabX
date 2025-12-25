@@ -4,6 +4,7 @@ import { useSelector } from "react-redux";
 
 import WhiteBoard from "../whiteboard/WhiteBoard.jsx";
 import { MessageCircleMore, Minimize2, Send } from "lucide-react";
+import Board from "../WhiteBoard2/Board.jsx";
 
 export default function RoomPage() {
   const { roomId } = useParams();
@@ -12,16 +13,18 @@ export default function RoomPage() {
   const [messages, setMessages] = useState([]);
   const [msg, setMsg] = useState("");
   const [chatOpen, setChatOpen] = useState(true);
+  const [boardEvent, setBoardEvent] = useState(null);
+
   const messagesEndRef = useRef(null);
 
   const { userData } = useSelector((state) => state.auth);
 
-  // Auto-scroll
+  // ---------------- AUTO SCROLL CHAT ----------------
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Custom cursor
+  // ---------------- CUSTOM CURSOR ----------------
   useEffect(() => {
     const cursor = document.getElementById("customCursor");
 
@@ -35,7 +38,7 @@ export default function RoomPage() {
     return () => window.removeEventListener("mousemove", moveCursor);
   }, []);
 
-  // WebSocket setup
+  // ---------------- WEBSOCKET SETUP ----------------
   useEffect(() => {
     if (!userData) return;
 
@@ -60,15 +63,28 @@ export default function RoomPage() {
         return;
       }
 
-      // ✅ CHAT ONLY (NO WHITEBOARD MUTATION)
+      // CHAT MESSAGE
       if (data.type === "chat") {
         setMessages((prev) => [...prev, data]);
+        return;
       }
+
+      // BOARD EVENTS (init, object:add, object:delete)
+      setBoardEvent(data);
+    };
+
+    ws.onerror = (err) => {
+      console.error("WS Error:", err);
+    };
+
+    ws.onclose = () => {
+      console.log("WS Closed");
     };
 
     return () => ws.close();
   }, [roomId, userData]);
 
+  // ---------------- SEND CHAT ----------------
   const sendChat = () => {
     if (!msg.trim()) return;
 
@@ -94,9 +110,17 @@ export default function RoomPage() {
         "
       />
 
-      {/* WHITEBOARD */}
-      <div className="flex-1 cursor-none">
-        <WhiteBoard wsRef={wsRef} />
+      {/* WHITEBOARD AREA */}
+      <div
+        className="flex-1 cursor-none"
+        onMouseEnter={() =>
+          document.getElementById("customCursor")?.classList.remove("hidden")
+        }
+        onMouseLeave={() =>
+          document.getElementById("customCursor")?.classList.add("hidden")
+        }
+      >
+        <Board wsRef={wsRef} events={boardEvent} />
       </div>
 
       {/* CHAT PANEL */}
