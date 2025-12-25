@@ -1,8 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
-
-import WhiteBoard from "../whiteboard/WhiteBoard.jsx";
 import { MessageCircleMore, Minimize2, Send } from "lucide-react";
 import Board from "../WhiteBoard2/Board.jsx";
 
@@ -16,13 +14,29 @@ export default function RoomPage() {
   const [boardEvent, setBoardEvent] = useState(null);
 
   const messagesEndRef = useRef(null);
-
   const { userData } = useSelector((state) => state.auth);
 
   // ---------------- AUTO SCROLL CHAT ----------------
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+const autoScroll = (smooth = true) => {
+  messagesEndRef.current?.scrollIntoView({
+    behavior: smooth ? "smooth" : "auto",
+  });
+};
+
+useEffect(() => {
+  if (chatOpen) {
+    autoScroll(false); 
+  }
+}, [chatOpen]);
+
+
+useEffect(() => {
+  autoScroll(true); 
+}, [messages]);
+
+
+
+
 
   // ---------------- CUSTOM CURSOR ----------------
   useEffect(() => {
@@ -63,23 +77,16 @@ export default function RoomPage() {
         return;
       }
 
-      // CHAT MESSAGE
       if (data.type === "chat") {
         setMessages((prev) => [...prev, data]);
         return;
       }
 
-      // BOARD EVENTS (init, object:add, object:delete)
       setBoardEvent(data);
     };
 
-    ws.onerror = (err) => {
-      console.error("WS Error:", err);
-    };
-
-    ws.onclose = () => {
-      console.log("WS Closed");
-    };
+    ws.onerror = (err) => console.error("WS Error:", err);
+    ws.onclose = () => console.log("WS Closed");
 
     return () => ws.close();
   }, [roomId, userData]);
@@ -99,7 +106,7 @@ export default function RoomPage() {
   };
 
   return (
-    <div className="h-screen w-screen flex flex-row relative overflow-hidden">
+    <div className="h-screen w-screen flex relative overflow-hidden">
       {/* CUSTOM CURSOR */}
       <div
         id="customCursor"
@@ -110,7 +117,7 @@ export default function RoomPage() {
         "
       />
 
-      {/* WHITEBOARD AREA */}
+      {/* WHITEBOARD */}
       <div
         className="flex-1 cursor-none"
         onMouseEnter={() =>
@@ -126,48 +133,125 @@ export default function RoomPage() {
       {/* CHAT PANEL */}
       <div
         className={`
-          fixed right-0 top-0 h-full bg-[#17212B] text-white
+          fixed right-0 top-0 h-screen overflow-hidden bg-[#17212B] text-white
           transition-all duration-300
           ${chatOpen ? "w-80" : "w-0 overflow-hidden"}
+          flex flex-col
         `}
       >
         {chatOpen && (
           <>
-            <div className="p-4 flex justify-between bg-[#242F3D]">
+            {/* HEADER */}
+            <div className="p-4 flex justify-between items-center bg-[#242F3D] cursor-default">
               <h2 className="text-blue-400 font-bold">Room Chat</h2>
-              <button onClick={() => setChatOpen(false)}>
+              <button onClick={() => setChatOpen(false)}
+                className="cursor-pointer">
                 <Minimize2 />
               </button>
             </div>
 
-            <div className="flex-1 p-4 overflow-y-auto">
-              {messages.map((m, i) => (
-                <div key={i} className="mb-2">
-                  {m.text}
-                </div>
-              ))}
+            {/* MESSAGES */}
+            <div className="flex-1 p-4 overflow-y-auto space-y-3 no-scrollbar">
+              {messages.map((m, i) => {
+                const isMe = m.name === userData?.userName;
+
+                return (
+                  <div
+                    key={i}
+                    className={`flex items-end ${
+                      isMe ? "justify-end" : "justify-start"
+                    }`}
+                  >
+                    {!isMe && (
+                      <img
+                        src={m.avatar}
+                        alt={m.name}
+                        className="w-5 h-5 rounded-full mr-2"
+                      />
+                    )}
+
+                    <div
+                      className="
+                        px-3 py-2 rounded-md text-sm
+                        min-w-[50%] max-w-[70%]
+                        break-words whitespace-pre-wrap
+                        bg-[#242F3D] text-white
+                      "
+                      style={isMe ? { backgroundColor: "#3b82f6" } : {}}
+                    >
+                      <div>{m.text}</div>
+
+                      <div className="flex justify-between items-center mt-1 text-[10px] text-indigo-200">
+                        {!isMe ? (
+                          <span
+                            className="font-medium truncate max-w-[70%]"
+                            style={{ color: m.color }}
+                          >
+                            {m.name}
+                          </span>
+                        ) : (
+                          <span />
+                        )}
+
+                        <span className="ml-2 shrink-0">
+                          {new Date(m.timestamp).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* ✅ REQUIRED FOR AUTO SCROLL */}
               <div ref={messagesEndRef} />
             </div>
 
-            <div className="p-4 flex gap-2">
+            {/* INPUT */}
+            <div className="p-3 flex items-center gap-2 bg-[#242F3D]">
               <input
                 value={msg}
                 onChange={(e) => setMsg(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && sendChat()}
-                className="flex-1 p-2"
+                placeholder="Type a message..."
+                className="
+      flex-1 px-3 py-2
+      rounded-md
+      text-sm text-white
+      bg-[#1e293b]
+      placeholder-gray-400
+      outline-none
+      border border-transparent
+      focus:border-blue-500
+    "
               />
-              <button onClick={sendChat}>
-                <Send />
+              <button
+                onClick={sendChat}
+                className="
+      px-3 py-2
+      rounded-md
+      bg-blue-500
+      text-white
+      hover:bg-blue-600
+      transition
+    "
+              >
+                <Send size={16} />
               </button>
             </div>
           </>
         )}
       </div>
 
+      {/* OPEN CHAT BUTTON */}
       {!chatOpen && (
         <button
-          onClick={() => setChatOpen(true)}
-          className="fixed top-4 right-4 bg-blue-500 p-2 rounded"
+          onClick={() => {
+            setChatOpen(true);
+          }}
+          className="fixed top-4 right-4 bg-blue-500 p-2 rounded text-white cursor-pointer"
         >
           <MessageCircleMore />
         </button>

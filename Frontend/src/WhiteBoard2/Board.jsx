@@ -16,20 +16,18 @@ function Board({ wsRef, events }) {
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
+
     const resize = () => {
-      // use parent element dimensions (wrapper) — this will change when chat opens/closes
       const parent = canvas.parentElement;
       if (!parent) return;
 
       const rect = parent.getBoundingClientRect();
       const dpr = window.devicePixelRatio || 1;
 
-      // only update when size actually changed (avoid unnecessary work)
       const newW = Math.max(1, Math.round(rect.width * dpr));
       const newH = Math.max(1, Math.round(rect.height * dpr));
-      if (canvas.width === newW && canvas.height === newH) {
-        return;
-      }
+
+      if (canvas.width === newW && canvas.height === newH) return;
 
       canvas.width = newW;
       canvas.height = newH;
@@ -37,15 +35,17 @@ function Board({ wsRef, events }) {
       canvas.style.width = rect.width + "px";
       canvas.style.height = rect.height + "px";
 
-      // reset transform to device pixels and then scale for drawing
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.scale(dpr, dpr);
+
+      drawAllShapes(canvas, shapes);
     };
 
-    // initial resize
     resize();
-   
-  }, []);
+    window.addEventListener("resize", resize);
+
+    return () => window.removeEventListener("resize", resize);
+  }, [shapes]);
 
   // REDRAW
   useEffect(() => {
@@ -126,13 +126,15 @@ function Board({ wsRef, events }) {
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
-       style={{
+        style={{
           width: "100%",
           height: "100%",
           background: "#111",
           touchAction: "none",
-          zIndex: 0, 
-          position: "relative", 
+          zIndex: 0,
+          position: "relative",
+          display: "block",      // ✅ critical
+          overflow: "hidden",    // ✅ safety
         }}
       />
     </>

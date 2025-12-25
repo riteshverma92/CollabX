@@ -216,3 +216,18 @@ html, body, #root {
 .no-scrollbar {
   overflow-x: hidden !important;
 }
+
+html, body, #root {
+  overflow: hidden;
+}
+
+
+/* Hide scrollbar but allow scrolling */
+.no-scrollbar {
+  -ms-overflow-style: none;     /* IE & Edge */
+  scrollbar-width: none;        /* Firefox */
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;                /* Chrome, Safari */
+}
