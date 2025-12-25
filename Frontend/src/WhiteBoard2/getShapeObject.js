@@ -1,9 +1,18 @@
-const getShapeObject = (tool, start, end, existing = null) => {
+const getShapeObject = (
+  tool,
+  start,
+  end,
+  shapeColor,
+  shapeSize,
+  existing = null
+) => {
   if (tool === "pen") {
     if (!existing) {
       return {
         type: "pen",
         points: [{ x: start.x, y: start.y }],
+        shapeColor: shapeColor || "#fff",
+        shapeSize: shapeSize || 2,
       };
     }
 
@@ -19,6 +28,8 @@ const getShapeObject = (tool, start, end, existing = null) => {
     y: start.y,
     width: end.x - start.x,
     height: end.y - start.y,
+    shapeColor: shapeColor || "#fff",
+    shapeSize: shapeSize || 2,
   };
 };
 

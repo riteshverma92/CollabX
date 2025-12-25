@@ -32,8 +32,8 @@ function chaikinSmooth(points, iterations = 2) {
 
 const drawShape = (ctx, shape) => {
   ctx.beginPath();
-  ctx.strokeStyle = "white";
-  ctx.lineWidth = 2;
+  ctx.strokeStyle = shape.shapeColor;
+  ctx.lineWidth = shape.shapeSize;
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
 

@@ -6,17 +6,25 @@ import isPointInsideShape from "./isPointInsideShape";
 
 function Board({ wsRef, events }) {
   const canvasRef = useRef(null);
-  const previewRef = useRef(null); // ✅ for pen preview
+  const previewRef = useRef(null);
+
   const [shapes, setShapes] = useState([]);
   const [tool, setTool] = useState(TOOLS.RECT);
+
+  const [strokeColor, setStrokeColor] = useState("#ffffff");
+  const [strokeSize, setStrokeSize] = useState(3);
+
   const isDrawing = useRef(false);
   const startPos = useRef({ x: 0, y: 0 });
   const eraseLock = useRef(false);
 
-  // CANVAS INIT
+  // ---------------- CANVAS INIT ----------------
   useEffect(() => {
     const canvas = canvasRef.current;
+    if (!canvas) return; // ✅ FIX
+
     const ctx = canvas.getContext("2d");
+    if (!ctx) return;
 
     const resize = () => {
       const parent = canvas.parentElement;
@@ -25,20 +33,13 @@ function Board({ wsRef, events }) {
       const rect = parent.getBoundingClientRect();
       const dpr = window.devicePixelRatio || 1;
 
-      const newW = Math.max(1, Math.round(rect.width * dpr));
-      const newH = Math.max(1, Math.round(rect.height * dpr));
-
-      if (canvas.width === newW && canvas.height === newH) return;
-
-      canvas.width = newW;
-      canvas.height = newH;
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
 
       canvas.style.width = rect.width + "px";
       canvas.style.height = rect.height + "px";
 
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
-      ctx.scale(dpr, dpr);
-
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       drawAllShapes(canvas, shapes);
     };
 
@@ -47,12 +48,13 @@ function Board({ wsRef, events }) {
     return () => window.removeEventListener("resize", resize);
   }, [shapes]);
 
-  // REDRAW
+  // ---------------- REDRAW ----------------
   useEffect(() => {
+    if (!canvasRef.current) return;
     drawAllShapes(canvasRef.current, shapes);
   }, [shapes]);
 
-  // WS EVENTS FROM PARENT
+  // ---------------- WS EVENTS ----------------
   useEffect(() => {
     if (!events) return;
 
@@ -62,6 +64,7 @@ function Board({ wsRef, events }) {
       setShapes((p) => p.filter((o) => o.id !== events.id));
   }, [events]);
 
+  // ---------------- EVENTS ----------------
   const handleDoubleclick = () => {
     if (tool === TOOLS.ERASER) {
       eraseLock.current = !eraseLock.current;
@@ -79,12 +82,16 @@ function Board({ wsRef, events }) {
       previewRef.current = getShapeObject(
         TOOLS.PEN,
         startPos.current,
-        startPos.current
+        startPos.current,
+        strokeColor,
+        strokeSize
       );
     }
   };
 
   const handleMouseMove = (e) => {
+    if (!canvasRef.current) return;
+
     const x = e.nativeEvent.offsetX;
     const y = e.nativeEvent.offsetY;
 
@@ -92,7 +99,6 @@ function Board({ wsRef, events }) {
     if (tool === TOOLS.ERASER && eraseLock.current) {
       const hit = shapes.find((s) => isPointInsideShape(x, y, s));
       if (hit) {
-        eraseLock.current = true;
         wsRef.current.send(
           JSON.stringify({ type: "object:delete", id: hit.id })
         );
@@ -102,12 +108,14 @@ function Board({ wsRef, events }) {
 
     if (!isDrawing.current) return;
 
-    // PEN (FREEHAND)
+    // PEN
     if (tool === TOOLS.PEN) {
       previewRef.current = getShapeObject(
         TOOLS.PEN,
         startPos.current,
         { x, y },
+        strokeColor,
+        strokeSize,
         previewRef.current
       );
       drawAllShapes(canvasRef.current, shapes, previewRef.current);
@@ -115,7 +123,13 @@ function Board({ wsRef, events }) {
     }
 
     // OTHER SHAPES
-    const preview = getShapeObject(tool, startPos.current, { x, y });
+    const preview = getShapeObject(
+      tool,
+      startPos.current,
+      { x, y },
+      strokeColor,
+      strokeSize
+    );
     drawAllShapes(canvasRef.current, shapes, preview);
   };
 
@@ -126,28 +140,27 @@ function Board({ wsRef, events }) {
     const x = e.nativeEvent.offsetX;
     const y = e.nativeEvent.offsetY;
 
-    if (tool === TOOLS.ERASER) {
-      handleDoubleclick();
-    }
-
-    // PEN FINALIZE
+    // PEN FINAL
     if (tool === TOOLS.PEN && previewRef.current) {
       wsRef.current.send(
         JSON.stringify({
           type: "object:add",
-          object: {
-            ...previewRef.current,
-            id: crypto.randomUUID(),
-          },
+          object: { ...previewRef.current, id: crypto.randomUUID() },
         })
       );
       previewRef.current = null;
       return;
     }
 
-    // OTHER SHAPES FINALIZE
+    // OTHER SHAPES FINAL
     const finalShape = {
-      ...getShapeObject(tool, startPos.current, { x, y }),
+      ...getShapeObject(
+        tool,
+        startPos.current,
+        { x, y },
+        strokeColor,
+        strokeSize
+      ),
       id: crypto.randomUUID(),
     };
 
@@ -156,46 +169,116 @@ function Board({ wsRef, events }) {
     );
   };
 
+  // ---------------- JSX ----------------
   return (
     <>
-<div className="absolute h-13 top-4 left-4 z-20 flex gap-2 bg-[#cfd3d3] backdrop-blur-md p-2 rounded-xl shadow-[0_8px_20px_rgba(0,0,0,0.35)]">
-  {[
-    { key: TOOLS.RECT, img: "/rectangle.png" },
-    { key: TOOLS.CIRCLE, img: "/record.png" },
-    { key: TOOLS.LINE, img: "/line.png" },
-    { key: TOOLS.PEN, img: "/pencil.png" },
-    { key: TOOLS.ERASER, img: "/eraser.png" },
-  ].map((toolBtn) => (
-    <button
-      key={toolBtn.key}
-      onClick={() => setTool(toolBtn.key)}
-      className={`
-        w-11 h-9 flex items-center justify-center rounded-md
-        transition-all duration-200 ease-out cursor-pointer
-        ${
-          tool === toolBtn.key
-            ? "bg-[#d8cff4] shadow-inner shadow-gray-400 scale-[0.95]"
-            : "bg-[#feffff] hover:bg-[#adacad] hover:scale-105"
-        }
-      `}
-    >
-      <img
-        src={toolBtn.img}
-        alt={toolBtn.key}
-        className={`
-          w-5 h-5 transition-all duration-200 ease-out
-          ${
-            tool === toolBtn.key
-              ? "scale-150 rotate-[-3deg]"
-              : "scale-100"
-          }
-        `}
-      />
-    </button>
-  ))}
-</div>
+      {/* TOOLBAR */}
+      <div
+        className="
+          absolute top-4 left-4 z-20
+          flex items-center gap-3
+          bg-[#cfd3d3]
+          px-3 py-2
+          rounded-xl
+          shadow-[0_8px_20px_rgba(0,0,0,0.35)]
+        "
+      >
+        {/* TOOLS */}
+        <div className="flex items-center gap-2">
+          {[
+            { key: TOOLS.RECT, img: "/rectangle.png" },
+            { key: TOOLS.CIRCLE, img: "/record.png" },
+            { key: TOOLS.LINE, img: "/line.png" },
+            { key: TOOLS.PEN, img: "/pencil.png" },
+            { key: TOOLS.ERASER, img: "/eraser.png" },
+          ].map((toolBtn) => (
+            <button
+              key={toolBtn.key}
+              onClick={() => setTool(toolBtn.key)}
+              className={`
+                w-11 h-9 flex items-center justify-center rounded-md
+                transition-all duration-150
+                ${
+                  tool === toolBtn.key
+                    ? "bg-[#d8cff4] shadow-inner"
+                    : "bg-[#feffff] hover:bg-[#adacad]"
+                }
+              `}
+            >
+              <img src={toolBtn.img} alt="" className="w-5 h-5" />
+            </button>
+          ))}
+        </div>
 
+        <div className="h-7 w-px bg-black/25" />
 
+        {/* COLOR */}
+        <label className="relative w-8 h-8 cursor-pointer">
+          <input
+            type="color"
+            value={strokeColor}
+            onChange={(e) => setStrokeColor(e.target.value)}
+            className="absolute inset-0 opacity-0 cursor-pointer"
+          />
+          <div
+            className="w-full h-full rounded-full border border-black/40"
+            style={{ backgroundColor: strokeColor }}
+          />
+        </label>
+
+        <div className="h-7 w-px bg-black/25" />
+
+        {/* STROKE */}
+        <div className="flex items-center gap-1 min-w-[80px]">
+          <div className="flex items-center gap-1 bg-[#feffff] px-2 py-1 rounded-lg shadow">
+            {/* DECREASE */}
+            <button
+              onClick={() => setStrokeSize((s) => Math.max(1, s - 1))}
+              className="
+      w-6 h-6 flex items-center justify-center
+      rounded-md
+      bg-[#e5e5e5]
+      hover:bg-[#d1d1d1]
+      transition
+      text-sm font-semibold
+      text-black
+    "
+            >
+              ▼
+            </button>
+
+            {/* VALUE */}
+            <span className="w-6 text-center text-sm font-medium text-black">
+              {strokeSize}
+            </span>
+
+            {/* INCREASE */}
+            <button
+              onClick={() => setStrokeSize((s) => Math.min(20, s + 1))}
+              className="
+      w-6 h-6 flex items-center justify-center
+      rounded-md
+      bg-[#e5e5e5]
+      hover:bg-[#d1d1d1]
+      transition
+      text-sm font-semibold
+      text-black
+    "
+            >
+              ▲
+            </button>
+          </div>
+        </div>
+
+         <div className="w-8 flex justify-center">
+            <div
+              className="rounded-full bg-black"
+              style={{ width: strokeSize, height: strokeSize }}
+            />
+          </div>
+      </div>
+
+      {/* CANVAS */}
       <canvas
         ref={canvasRef}
         onMouseDown={handleMouseDown}
@@ -207,10 +290,7 @@ function Board({ wsRef, events }) {
           height: "100%",
           background: "#111",
           touchAction: "none",
-          zIndex: 0,
-          position: "relative",
           display: "block",
-          overflow: "hidden",
         }}
       />
     </>
