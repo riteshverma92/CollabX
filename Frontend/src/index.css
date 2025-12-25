@@ -207,11 +207,6 @@ html, body, #root {
   display: none;
 }
 
-/* Hide scrollbar for Firefox */
-.no-scrollbar {
-  scrollbar-width: none;
-}
-
 /* Prevent horizontal scroll entirely */
 .no-scrollbar {
   overflow-x: hidden !important;
@@ -224,10 +219,9 @@ html, body, #root {
 
 /* Hide scrollbar but allow scrolling */
 .no-scrollbar {
-  -ms-overflow-style: none;     /* IE & Edge */
-  scrollbar-width: none;        /* Firefox */
+  -ms-overflow-style: none;    
 }
 
 .no-scrollbar::-webkit-scrollbar {
-  display: none;                /* Chrome, Safari */
+  display: none;               
 }

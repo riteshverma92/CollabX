@@ -17,26 +17,21 @@ export default function RoomPage() {
   const { userData } = useSelector((state) => state.auth);
 
   // ---------------- AUTO SCROLL CHAT ----------------
-const autoScroll = (smooth = true) => {
-  messagesEndRef.current?.scrollIntoView({
-    behavior: smooth ? "smooth" : "auto",
-  });
-};
+  const autoScroll = (smooth = true) => {
+    messagesEndRef.current?.scrollIntoView({
+      behavior: smooth ? "smooth" : "auto",
+    });
+  };
 
-useEffect(() => {
-  if (chatOpen) {
-    autoScroll(false); 
-  }
-}, [chatOpen]);
+  useEffect(() => {
+    if (chatOpen) {
+      autoScroll(false);
+    }
+  }, [chatOpen]);
 
-
-useEffect(() => {
-  autoScroll(true); 
-}, [messages]);
-
-
-
-
+  useEffect(() => {
+    autoScroll(true);
+  }, [messages]);
 
   // ---------------- CUSTOM CURSOR ----------------
   useEffect(() => {
@@ -111,11 +106,14 @@ useEffect(() => {
       <div
         id="customCursor"
         className="
-          pointer-events-none absolute w-5 h-5 rounded-full
-          bg-red-500/10 border border-red-500/30
-          -translate-x-1/2 -translate-y-1/2 z-50 hidden
-        "
-      />
+    pointer-events-none absolute w-5 h-5 rounded-full
+    bg-red-500/10 border border-red-500/30
+    -translate-x-1/2 -translate-y-1/2 z-50 hidden
+    flex items-center justify-center
+  "
+      >
+        <div className="w-1 h-1 rounded-full bg-[#cacaca71]" />
+      </div>
 
       {/* WHITEBOARD */}
       <div
@@ -132,20 +130,26 @@ useEffect(() => {
 
       {/* CHAT PANEL */}
       <div
-        className={`
-          fixed right-0 top-0 h-screen overflow-hidden bg-[#17212B] text-white
-          transition-all duration-300
-          ${chatOpen ? "w-80" : "w-0 overflow-hidden"}
-          flex flex-col
-        `}
-      >
+  className={`
+    fixed right-0 top-0 h-screen overflow-hidden
+    bg-[#17212B] text-white
+    transition-all duration-300
+    shadow-[-4px_0_12px_rgba(255,255,255,0.1)]
+
+    ${chatOpen ? "w-80" : "w-0 overflow-hidden"}
+    flex flex-col
+  `}
+>
+
         {chatOpen && (
           <>
             {/* HEADER */}
             <div className="p-4 flex justify-between items-center bg-[#242F3D] cursor-default">
-              <h2 className="text-blue-400 font-bold">Room Chat</h2>
-              <button onClick={() => setChatOpen(false)}
-                className="cursor-pointer">
+              <h1 className="text-blue-400 font-bold ">Room Chat</h1>
+              <button
+                onClick={() => setChatOpen(false)}
+                className="cursor-pointer"
+              >
                 <Minimize2 />
               </button>
             </div>
@@ -251,7 +255,7 @@ useEffect(() => {
           onClick={() => {
             setChatOpen(true);
           }}
-          className="fixed top-4 right-4 bg-blue-500 p-2 rounded text-white cursor-pointer"
+          className="fixed top-4 right-3 bg-blue-400 p-2 rounded text-white cursor-pointer"
         >
           <MessageCircleMore />
         </button>

@@ -1,15 +1,25 @@
-const getShapeObject = (tool , start , end) =>{
-
-    const shapeObject = {
-        type : tool,
-        x : start.x,
-        y : start.y,
-        width : end.x - start.x,
-        height : end.y - start.y 
-    
+const getShapeObject = (tool, start, end, existing = null) => {
+  if (tool === "pen") {
+    if (!existing) {
+      return {
+        type: "pen",
+        points: [{ x: start.x, y: start.y }],
+      };
     }
 
-    return  shapeObject ;
-}
+    return {
+      ...existing,
+      points: [...existing.points, { x: end.x, y: end.y }],
+    };
+  }
 
-export default  getShapeObject;
+  return {
+    type: tool,
+    x: start.x,
+    y: start.y,
+    width: end.x - start.x,
+    height: end.y - start.y,
+  };
+};
+
+export default getShapeObject;
