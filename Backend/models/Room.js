@@ -10,7 +10,13 @@ export const roomSchema = new mongoose.Schema({
       ref: "User",
     },
   ],
-  createdAt: { type: Date, default: Date.now }
+  createdAt: { type: Date, default: Date.now },
+  blockedUsers: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User"
+    },
+  ],
 });
 
 export default mongoose.model("Room", roomSchema);

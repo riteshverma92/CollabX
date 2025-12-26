@@ -181,6 +181,7 @@ function Board({ wsRef, events }) {
           px-3 py-2
           rounded-xl
           shadow-[0_8px_20px_rgba(0,0,0,0.35)]
+          
         "
       >
         {/* TOOLS */}

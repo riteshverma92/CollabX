@@ -3,6 +3,9 @@ import { useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { MessageCircleMore, Minimize2, Send, Users } from "lucide-react";
 import Board from "../WhiteBoard2/Board.jsx";
+import { toast } from "react-toastify";
+import Loading from "./Loading.jsx";
+import axios from "axios";
 
 export default function RoomPage() {
   const { roomId } = useParams();
@@ -20,6 +23,11 @@ export default function RoomPage() {
 
   const [allUsers, setAllUsers] = useState({});
 
+  const [owner, setOwner] = useState("");
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [loading, setLoading] = useState(false);
+
   // ---------------- AUTO SCROLL CHAT ----------------
   const autoScroll = (smooth = true) => {
     messagesEndRef.current?.scrollIntoView({
@@ -36,6 +44,40 @@ export default function RoomPage() {
   useEffect(() => {
     autoScroll(true);
   }, [messages]);
+
+  // -----------------FETCH ROOM DETAIL---------------
+  useEffect(() => {
+    loadAllRooms();
+  }, []);
+
+  const loadAllRooms = async () => {
+    try {
+      setLoading(true);
+      const res = await axios.get(
+        "http://localhost:5000/api/user/get-user-rooms",
+        { withCredentials: true }
+      );
+
+      if (res.data.success) {
+        const room = res.data.ownrooms.find(
+          (room) => room._id === roomId || room.roomCode === roomId
+        );
+
+        if (room) {
+          setOwner(room.owner);
+        }
+      }
+    } catch {
+      setOwner("@@@@@@@@@"); // for safe
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ------------Remove User -----------------
+  const removeUser = () => {
+    // Work in the future
+  };
 
   // ---------------- CUSTOM CURSOR ----------------
   useEffect(() => {
@@ -86,7 +128,6 @@ export default function RoomPage() {
         return;
       }
 
-      // ✅ ONLY board-related events reach here
       setBoardEvent(data);
     };
 
@@ -112,15 +153,22 @@ export default function RoomPage() {
 
   return (
     <div className="h-screen w-screen flex relative overflow-hidden">
-      {/* CUSTOM CURSOR */}
+      {/* CUSTOM CURSOR (ONLY FIXED PART) */}
       <div
         id="customCursor"
         className="
-    pointer-events-none absolute w-5 h-5 rounded-full
-    bg-red-500/10 border border-red-500/30
-    -translate-x-1/2 -translate-y-1/2 z-50 hidden
-    flex items-center justify-center
-  "
+          pointer-events-none
+          fixed
+          top-0 left-0
+          w-4 h-4
+          rounded-full
+          bg-red-500/20
+          border border-red-500/40
+          -translate-x-1/2 -translate-y-1/2
+          z-[9999]
+          hidden
+          flex items-center justify-center
+        "
       >
         <div className="w-1 h-1 rounded-full bg-[#cacaca71]" />
       </div>
@@ -141,18 +189,16 @@ export default function RoomPage() {
       {/* CHAT PANEL */}
       <div
         className={`
-    fixed right-0 top-0 h-screen overflow-hidden
-    bg-[#17212B] text-white
-    transition-all duration-300
-    shadow-[-4px_0_12px_rgba(255,255,255,0.1)]
-
-    ${chatOpen ? "w-80" : "w-0 overflow-hidden"}
-    flex flex-col
-  `}
+          fixed right-0 top-0 h-screen overflow-hidden
+          bg-[#17212B] text-white
+          transition-all duration-300
+          shadow-[-4px_0_12px_rgba(255,255,255,0.1)]
+          ${chatOpen ? "w-80" : "w-0 overflow-hidden"}
+          flex flex-col
+        `}
       >
         {chatOpen && (
           <>
-            {/* HEADER */}
             <div className="p-4 flex justify-between items-center bg-[#242F3D] cursor-default">
               <h1 className="text-blue-400 font-bold ">Room Chat</h1>
               <button
@@ -163,7 +209,6 @@ export default function RoomPage() {
               </button>
             </div>
 
-            {/* MESSAGES */}
             <div className="flex-1 p-4 overflow-y-auto space-y-3 no-scrollbar">
               {messages.map((m, i) => {
                 const isMe = m.name === userData?.userName;
@@ -218,11 +263,9 @@ export default function RoomPage() {
                 );
               })}
 
-              {/* ✅ REQUIRED FOR AUTO SCROLL */}
               <div ref={messagesEndRef} />
             </div>
 
-            {/* INPUT */}
             <div className="p-3 flex items-center gap-2 bg-[#242F3D]">
               <input
                 value={msg}
@@ -230,26 +273,26 @@ export default function RoomPage() {
                 onKeyDown={(e) => e.key === "Enter" && sendChat()}
                 placeholder="Type a message..."
                 className="
-      flex-1 px-3 py-2
-      rounded-md
-      text-sm text-white
-      bg-[#1e293b]
-      placeholder-gray-400
-      outline-none
-      border border-transparent
-      focus:border-blue-500
-    "
+                  flex-1 px-3 py-2
+                  rounded-md
+                  text-sm text-white
+                  bg-[#1e293b]
+                  placeholder-gray-400
+                  outline-none
+                  border border-transparent
+                  focus:border-blue-500
+                "
               />
               <button
                 onClick={sendChat}
                 className="
-      px-3 py-2
-      rounded-md
-      bg-blue-500
-      text-white
-      hover:bg-blue-600
-      transition
-    "
+                  px-3 py-2
+                  rounded-md
+                  bg-blue-500
+                  text-white
+                  hover:bg-blue-600
+                  transition
+                "
               >
                 <Send size={16} />
               </button>
@@ -258,84 +301,139 @@ export default function RoomPage() {
         )}
       </div>
 
+      {OnlineOpen && (
+        <div
+          className={`
+            fixed right-0 top-0 h-screen
+            bg-[#17212B] text-white
+            shadow-[-4px_0_12px_rgba(255,255,255,0.1)]
+            transition-all duration-300 ease-in-out
+            ${OnlineOpen ? "w-64" : "w-0 overflow-hidden"}
+            flex flex-col
+          `}
+        >
+          {OnlineOpen && (
+            <>
+              <div className="p-4 flex justify-between items-center bg-[#242F3D]">
+                <h2 className="text-blue-400 font-bold">Online Users</h2>
+                <button onClick={() => setOnlineOpen(false)}>
+                  <Minimize2 />
+                </button>
+              </div>
 
-     {OnlineOpen && (
-  <div
-  className={`
-    fixed right-0 top-0 h-screen
-    bg-[#17212B] text-white
-    shadow-[-4px_0_12px_rgba(255,255,255,0.1)]
-    transition-all duration-300 ease-in-out
-    ${OnlineOpen ? "w-64" : "w-0 overflow-hidden"}
-    flex flex-col
-  `}
->
-  {OnlineOpen && (
-    <>
-      {/* HEADER */}
-      <div className="p-4 flex justify-between items-center bg-[#242F3D]">
-        <h2 className="text-blue-400 font-bold">Online Users</h2>
-        <button onClick={() => setOnlineOpen(false)}>
-          <Minimize2 />
-        </button>
-      </div>
+              <div className="flex-1 overflow-y-auto p-3 space-y-3">
+                {Object.values(allUsers).map((user) => (
+                  <div
+                    key={user.userId}
+                    className="flex items-center gap-3 bg-[#1e293b] p-2 rounded"
+                  >
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={user.avatar}
+                        alt={user.name}
+                        className="w-8 h-8 rounded-full"
+                      />
+                      <span className="text-sm">{user.name}</span>
+                    </div>
 
-      {/* USERS LIST */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-3">
-        {Object.values(allUsers).map((user) => (
-          <div
-            key={user.userId}
-            className="flex items-center gap-3 bg-[#1e293b] p-2 rounded"
-          >
-            <img
-              src={user.avatar}
-              alt={user.name}
-              className="w-8 h-8 rounded-full"
-            />
-            <span className="text-sm">{user.name}</span>
-          </div>
-        ))}
-      </div>
-    </>
-  )}
-</div>
+                    {userData?.userID === owner && (
+                      <img
+                        src="/delete.png"
+                        alt="delete"
+                        className="w-5 h-6 ml-auto cursor-pointer hover:scale-125 transition-transform duration-200"
+                        onClick={() => {
+                          setSelectedUser(user.userId);
+                          setShowDeleteModal(true);
+                        }}
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      )}
 
-)}
-
-      {/* OPEN CHAT BUTTON */}
       {!chatOpen && !OnlineOpen && (
         <div className="fixed top-4 right-4 flex items-center gap-2">
-          {/* USER COUNT */}
           <h3
-            onClick={() =>(setOnlineOpen(true))}
+            onClick={() => setOnlineOpen(true)}
             className="
-      flex items-center gap-1
-      h-10
-      text-white text-sm
-      px-3 rounded
-      bg-gray-800
-      cursor-pointer
-    "
+              flex items-center gap-1
+              h-10
+              text-white text-sm
+              px-3 rounded
+              bg-gray-800
+              cursor-pointer
+            "
           >
             <Users size={18} />
             <span>{Object.keys(allUsers).length}</span>
           </h3>
 
-          {/* CHAT OPEN BUTTON */}
           <button
             onClick={() => setChatOpen(true)}
             className="
-      h-10 w-10
-      flex items-center justify-center
-      bg-blue-500
-      rounded
-      text-white
-      cursor-pointer
-    "
+              h-10 w-10
+              flex items-center justify-center
+              bg-blue-500
+              rounded
+              text-white
+              cursor-pointer
+            "
           >
             <MessageCircleMore />
           </button>
         </div>
+      )}
+
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+  <div className="w-full max-w-sm rounded-2xl bg-[#17212B] p-6 text-white shadow-2xl border border-white/10 animate-scaleIn">
+    
+    {/* Header */}
+    <h2 className="text-lg font-semibold text-red-400 mb-2">
+      Remove User
+    </h2>
+
+    {/* Description */}
+    <p className="text-sm text-gray-300 leading-relaxed mb-6">
+      This action will immediately remove the user from the room.
+      Are you sure you want to continue?
+    </p>
+
+    {/* Actions */}
+    <div className="flex justify-end gap-3">
+      <button
+        onClick={() => setShowDeleteModal(false)}
+        className="
+          px-4 py-2 rounded-lg
+          bg-gray-700/80
+          text-sm font-medium
+          hover:bg-gray-600
+          transition
+        "
+      >
+        Cancel
+      </button>
+
+      <button
+        onClick={removeUser}
+        className="
+          px-4 py-2 rounded-lg
+          bg-red-600
+          text-sm font-semibold
+          hover:bg-red-700
+          transition
+        "
+      >
+        Remove User
+      </button>
+    </div>
+  </div>
+</div>
+
       )}
     </div>
   );
