@@ -29,7 +29,20 @@ function App() {
 
   return (
     <div>
-      <ToastContainer />
+      <ToastContainer 
+      position="top-left"
+        autoClose={2000}
+        hideProgressBar={false}
+        newestOnTop={true}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="dark"
+      
+      
+      />
 
       <Routes>
        

@@ -25,8 +25,13 @@ export default function RoomPage() {
 
   const [owner, setOwner] = useState("");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+
   const [selectedUser, setSelectedUser] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+
+  const [shapes, setShapes] = useState([]);
+
 
   // ---------------- AUTO SCROLL CHAT ----------------
   const autoScroll = (smooth = true) => {
@@ -151,6 +156,9 @@ export default function RoomPage() {
     setMsg("");
   };
 
+ {shapes.length == 0 && <Loading />}
+
+
   return (
     <div className="h-screen w-screen flex relative overflow-hidden">
       {/* CUSTOM CURSOR (ONLY FIXED PART) */}
@@ -183,7 +191,7 @@ export default function RoomPage() {
           document.getElementById("customCursor")?.classList.add("hidden")
         }
       >
-        <Board wsRef={wsRef} events={boardEvent} />
+        <Board wsRef={wsRef} events={boardEvent} shapes = {shapes} setShapes ={setShapes} />
       </div>
 
       {/* CHAT PANEL */}
@@ -316,7 +324,8 @@ export default function RoomPage() {
             <>
               <div className="p-4 flex justify-between items-center bg-[#242F3D]">
                 <h2 className="text-blue-400 font-bold">Online Users</h2>
-                <button onClick={() => setOnlineOpen(false)}>
+                <button onClick={() => setOnlineOpen(false)}
+                  className="cursor-pointer">
                   <Minimize2 />
                 </button>
               </div>
@@ -331,12 +340,12 @@ export default function RoomPage() {
                       <img
                         src={user.avatar}
                         alt={user.name}
-                        className="w-8 h-8 rounded-full"
+                        className="w-5 h-5 rounded-full"
                       />
                       <span className="text-sm">{user.name}</span>
                     </div>
 
-                    {userData?.userID === owner && (
+                    {userData?.userID === owner && owner != user.userId && (
                       <img
                         src="/delete.png"
                         alt="delete"
@@ -356,7 +365,7 @@ export default function RoomPage() {
       )}
 
       {!chatOpen && !OnlineOpen && (
-        <div className="fixed top-4 right-4 flex items-center gap-2">
+        <div className="fixed top-4 right-4 flex items-center gap-2  ">
           <h3
             onClick={() => setOnlineOpen(true)}
             className="

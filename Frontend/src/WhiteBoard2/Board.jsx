@@ -4,11 +4,11 @@ import drawAllShapes from "./drawAllShape";
 import getShapeObject from "./getShapeObject";
 import isPointInsideShape from "./isPointInsideShape";
 
-function Board({ wsRef, events }) {
+function Board({ wsRef, events , shapes , setShapes }) {
   const canvasRef = useRef(null);
   const previewRef = useRef(null);
 
-  const [shapes, setShapes] = useState([]);
+
   const [tool, setTool] = useState(TOOLS.RECT);
 
   const [strokeColor, setStrokeColor] = useState("#796A35");
@@ -21,7 +21,7 @@ function Board({ wsRef, events }) {
   // ---------------- CANVAS INIT ----------------
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return; // ✅ FIX
+    if (!canvas) return; 
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;

@@ -192,17 +192,17 @@ export default function Dashboard() {
 
                   <div className="flex gap-2">
                     <button
-                      className="p-1.5 rounded-lg transition group"
+                      className="p-1.5 rounded-lg transition-transform duration-200 group hover:scale-125 cursor-pointer"
                       onClick={(e) => {
                         e.stopPropagation();
                         copyRoomCode(room.roomCode);
                       }}
                     >
-                      <Share2 className="w-4 h-4 text-white/50 group-hover:text-[hsl(var(--accent))]" />
+                      <Share2 className="w-4 h-4 text-white/50 group-hover:text-[hsl(var(--accent))] " />
                     </button>
 
                     <button
-                      className="p-1.5 rounded-lg transition group"
+                      className="p-1.5 rounded-lg transition-transform duration-200 group hover:scale-125 cursor-pointer"
                       onClick={(e) => {
                         e.stopPropagation();
                         deleteRoom(room._id);
@@ -244,7 +244,7 @@ export default function Dashboard() {
                   <h3 className="font-medium truncate">{room.title}</h3>
 
                   <button
-                    className="p-1.5 rounded-lg transition group"
+                    className="p-1.5 rounded-lg transition-transform duration-200 group hover:scale-125 cursor-pointer"
                     onClick={(e) => {
                       e.stopPropagation();
                       removeRoom(room._id);
